@@ -17,6 +17,23 @@ public:
 	virtual void PostRender() {};
 
 	inline GraphicsPass(std::string passName) : mPassName(passName) {};
+
+	inline void RegisterRenderObject(RenderObject* objRef)
+	{
+		if (std::find(mRenderObjectRefs.begin(), mRenderObjectRefs.end(), objRef) != mRenderObjectRefs.end())
+		{
+			mRenderObjectRefs.push_back(objRef);
+		}
+	}
+
+	inline void RemoveRenderObject(RenderObject* objRef)
+	{
+		auto refInVector = std::find(mRenderObjectRefs.begin(), mRenderObjectRefs.end(), objRef);
+		if (refInVector != mRenderObjectRefs.end())
+		{
+			mRenderObjectRefs.erase(refInVector);
+		}
+	}
 };
 
 class PassGraph

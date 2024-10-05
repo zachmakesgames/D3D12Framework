@@ -6,6 +6,7 @@
 #include "Dx12Device.h"
 #include "GraphicsPass.h"
 #include "RenderObject.h"
+#include "Mesh.h"
 
 #define MAX_LOADSTRING 100
 
@@ -84,7 +85,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     cmdQueue->ExecuteCommandLists(_countof(lists), lists);
 
     Dx12Device::Present();
-
     
 
     RenderObject carObject;
