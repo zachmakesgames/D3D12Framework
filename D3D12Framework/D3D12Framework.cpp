@@ -95,14 +95,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UINT vertexSize = sizeof(Vertex);
 
     // TODO: Make this all part of loading the mesh, create the vertex buffer and the view all in one go
-    Mesh boxMesh = Mesh::LoadMeshFromObj("../../../Resources/Models/box.obj");
-    auto boxMeshBuffer = Dx12Device::CreateBuffer(boxMesh.mVertexData, sizeof(Vertex) * boxMesh.mVertexCount);
+    std::unique_ptr<Mesh> boxMesh = Mesh::LoadMeshFromObj("../../../Resources/Models/box.obj");
+    //auto boxMeshBuffer = Dx12Device::CreateBuffer(boxMesh.mVertexData, sizeof(Vertex) * boxMesh.mVertexCount);
     // Need to create a vertex buffer view
     
-    D3D12_VERTEX_BUFFER_VIEW vbv = {};
+    /*D3D12_VERTEX_BUFFER_VIEW vbv = {};
     vbv.BufferLocation = boxMeshBuffer->mResource->GetGPUVirtualAddress();
     vbv.SizeInBytes = boxMesh.mVertexCount * sizeof(Vertex);
-    vbv.StrideInBytes = sizeof(Vertex);
+    vbv.StrideInBytes = sizeof(Vertex);*/
 
     
     auto vertexShader = D3dUtils::Dxc3CompileShader(L"../../../Resources/Shaders/test.hlsl", nullptr, L"vsMain", L"vs_6_6");
@@ -245,12 +245,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         cmdList->SetPipelineState(pso.Get());
 
 
-        cmdList->IASetVertexBuffers(0, 1, &vbv);
+        cmdList->IASetVertexBuffers(0, 1, &boxMesh->mVertexBufferView);
         cmdList->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 
         //should have 36 vertices for a cube
-        UINT count = boxMesh.mVertexCount;
+        UINT count = boxMesh->mVertexCount;
         cmdList->DrawInstanced(count, 1, 0, 0);
 
 

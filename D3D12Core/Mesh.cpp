@@ -4,15 +4,15 @@
 #include <iostream>
 #include <fstream>
 
-Mesh Mesh::LoadMeshFromObj(std::string file_name)
+std::unique_ptr<Mesh> Mesh::LoadMeshFromObj(std::string file_name)
 {
-	Mesh returnMesh;
+	std::unique_ptr<Mesh> returnMesh = std::make_unique<Mesh>();
 	std::ifstream file;
 	//this->modelName = objFileName;
 	file.open(file_name, std::fstream::in);
 	if (!file) {
 		OutputDebugStringA("ERROR: Tried to load a mesh from file, but file was not found!");
-		return returnMesh;
+		return std::move(returnMesh);
 	}
 	int lines = 0;
 	std::string line = "";
@@ -183,16 +183,16 @@ Mesh Mesh::LoadMeshFromObj(std::string file_name)
 	// Three vertices per triangle
 	int dataLen = triCount * 3;
 	//this->dataSize = dataLen;
-	returnMesh.mDataLen = dataLen;
+	returnMesh->mDataLen = dataLen;
 
 	int idx = 0;
 	//GLfloat* data = new GLfloat[dataLen];
 	//this->data = new vertex[dataLen];
-	returnMesh.mVertexData = new Vertex[dataLen];
+	returnMesh->mVertexData = new Vertex[dataLen];
 
 	for (int i = 0; i < dataLen; ++i) {
 		//data[i] = {};
-		returnMesh.mVertexData[i] = {};
+		returnMesh->mVertexData[i] = {};
 	}
 
 	for (int i = 0; i < triCount; ++i) {
@@ -219,7 +219,7 @@ Mesh Mesh::LoadMeshFromObj(std::string file_name)
 		vert1.texCoord = tex[t1 - 1];
 		//vert1.color = glm::vec3(1.0, 1.0, 1.0);
 
-		returnMesh.mVertexData[idx++] = vert1;
+		returnMesh->mVertexData[idx++] = vert1;
 		//data[idx++] = vert1;
 
 		//v2
@@ -230,7 +230,7 @@ Mesh Mesh::LoadMeshFromObj(std::string file_name)
 		//vert2.color = glm::vec3(1.0, 1.0, 1.0);
 
 		//data[idx++] = vert2;
-		returnMesh.mVertexData[idx++] = vert2;
+		returnMesh->mVertexData[idx++] = vert2;
 
 		//v3
 		Vertex vert3;
@@ -243,7 +243,7 @@ Mesh Mesh::LoadMeshFromObj(std::string file_name)
 		//m_triangles.push_back(phys_triangle);
 
 		//data[idx++] = vert3;
-		returnMesh.mVertexData[idx++] = vert3;
+		returnMesh->mVertexData[idx++] = vert3;
 
 	}
 
@@ -253,7 +253,7 @@ Mesh Mesh::LoadMeshFromObj(std::string file_name)
 	delete[] tris;
 
 	//this->verts = triCount * 3;
-	returnMesh.mVertexCount = triCount * 3;
+	returnMesh->mVertexCount = triCount * 3;
 
 	/*bounding_volume_center = glm::vec3(0, 0, 0);
 
@@ -285,7 +285,14 @@ Mesh Mesh::LoadMeshFromObj(std::string file_name)
 
 	file.close();
 
-	return returnMesh;
+	returnMesh->mVertexBuffer = Dx12Device::CreateBuffer(returnMesh->mVertexData, sizeof(Vertex) * returnMesh->mVertexCount);
+
+	returnMesh->mVertexBufferView = {};
+	returnMesh->mVertexBufferView.BufferLocation = returnMesh->mVertexBuffer->mResource->GetGPUVirtualAddress();
+	returnMesh->mVertexBufferView.SizeInBytes = returnMesh->mVertexCount * sizeof(Vertex);
+	returnMesh->mVertexBufferView.StrideInBytes = sizeof(Vertex);
+
+	return std::move(returnMesh);
 }
 
 Mesh::~Mesh()
