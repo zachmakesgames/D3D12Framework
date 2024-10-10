@@ -1,5 +1,6 @@
 #include "Dx12Device.h"
 
+
 static Dx12Device* sDevice;
 
 Dx12Device* Dx12Device::GetDevice()
@@ -25,7 +26,7 @@ Dx12Device::Dx12Device()
 	// 3. Create D3D12 device and fallback to WARP if necessary
 	HRESULT result = D3D12CreateDevice(
 		nullptr,
-		D3D_FEATURE_LEVEL_12_0,
+		D3D_FEATURE_LEVEL_12_1,
 		IID_PPV_ARGS(&mD3dDevice));
 
 	if (FAILED(result))
@@ -36,7 +37,7 @@ Dx12Device::Dx12Device()
 
 		ThrowIfFailed(D3D12CreateDevice(
 			pWarpAdapter.Get(),
-			D3D_FEATURE_LEVEL_12_0,
+			D3D_FEATURE_LEVEL_12_1,
 			IID_PPV_ARGS(&mD3dDevice)));
 	}
 
@@ -51,15 +52,21 @@ Dx12Device::Dx12Device()
 	// 6. Check quality support for necessary features
 	// Couldn't get MSAA to work for some stupid reason, so we wont check support here
 
-	D3D12_FEATURE_DATA_SHADER_MODEL requestedShaderModel = { D3D_SHADER_MODEL_6_0 };
+	D3D12_FEATURE_DATA_SHADER_MODEL requestedShaderModel = { D3D_SHADER_MODEL_6_6 };
 	if (FAILED(mD3dDevice->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &requestedShaderModel, sizeof(requestedShaderModel)))
-		|| (requestedShaderModel.HighestShaderModel < D3D_SHADER_MODEL_6_0))
+		|| (requestedShaderModel.HighestShaderModel < D3D_SHADER_MODEL_6_6))
 		{
 #if defined(DEBUG) || defined(_DEBUG)
-			OutputDebugStringA("ERROR: Shader Model 6.0 is not supported!\r\n");
+			OutputDebugStringA("ERROR: Shader Model 6.6 is not supported!\r\n");
 #endif
 			ThrowIfFailed(E_FAIL);
 		}
+	else
+	{
+#if defined(DEBUG) || defined(_DEBUG)
+		OutputDebugStringA("Shader Model 6.6 is supported\r\n");
+#endif
+	}
 
 	// 7. Create command list objects
 	D3D12_COMMAND_QUEUE_DESC queueDesc = {};
@@ -67,14 +74,17 @@ Dx12Device::Dx12Device()
 	queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 	ThrowIfFailed(mD3dDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&mCommandQueue)));
 
-	ThrowIfFailed(mD3dDevice->CreateCommandAllocator(
-		D3D12_COMMAND_LIST_TYPE_DIRECT,
-		IID_PPV_ARGS(mDirectCmdListAlloc.GetAddressOf())));
+	for (int i = 0; i < mSwapChainBufferCount; ++i)
+	{
+		ThrowIfFailed(mD3dDevice->CreateCommandAllocator(
+			D3D12_COMMAND_LIST_TYPE_DIRECT,
+			IID_PPV_ARGS(mDirectCmdListAlloc[i].GetAddressOf())));
+	}
 
 	ThrowIfFailed(mD3dDevice->CreateCommandList(
 		0,
 		D3D12_COMMAND_LIST_TYPE_DIRECT,
-		mDirectCmdListAlloc.Get(),
+		mDirectCmdListAlloc[0].Get(),
 		nullptr,
 		IID_PPV_ARGS(mCommandList.GetAddressOf())));
 
@@ -82,7 +92,7 @@ Dx12Device::Dx12Device()
 
 	// 8. Create descriptor heaps
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-	rtvHeapDesc.NumDescriptors = mSwapChainBufferCount;
+	rtvHeapDesc.NumDescriptors = 256;
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	rtvHeapDesc.NodeMask = 0;
@@ -90,7 +100,7 @@ Dx12Device::Dx12Device()
 	ThrowIfFailed(mD3dDevice->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(mRtvHeap.GetAddressOf())));
 
 	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-	dsvHeapDesc.NumDescriptors = 1;
+	dsvHeapDesc.NumDescriptors = 256;
 	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
 	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	dsvHeapDesc.NodeMask = 0;
@@ -99,8 +109,8 @@ Dx12Device::Dx12Device()
 
 	D3D12_DESCRIPTOR_HEAP_DESC cbvSrvUavHeapDesc = {};
 	cbvSrvUavHeapDesc.NumDescriptors = 256;
-	cbvSrvUavHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-	cbvSrvUavHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	cbvSrvUavHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	cbvSrvUavHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	cbvSrvUavHeapDesc.NodeMask = 0;
 
 	ThrowIfFailed(mD3dDevice->CreateDescriptorHeap(&cbvSrvUavHeapDesc, IID_PPV_ARGS(mCbvSrvUavHeap.GetAddressOf())));
@@ -108,12 +118,12 @@ Dx12Device::Dx12Device()
 
 void Dx12Device::ResizeSwapchain(int swapchainWidth, int swapchainHeight)
 {
-	if (mD3dDevice != nullptr && mSwapChain != nullptr && mDirectCmdListAlloc != nullptr)
+	if (mD3dDevice != nullptr && mSwapChain != nullptr && mDirectCmdListAlloc[mCurrentBackBuffer] != nullptr)
 	{
 
 		FlushCommandQueue();
 
-		ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
+		ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc[mCurrentBackBuffer].Get(), nullptr));
 
 		for (int i = 0; i < mSwapChainBufferCount; ++i)
 		{
@@ -200,12 +210,16 @@ void Dx12Device::FlushCommandQueue()
 
 	if (mFence->GetCompletedValue() < mCurrentFenceVal)
 	{
-		HANDLE waitHandle = CreateEventEx(nullptr, NULL, CREATE_EVENT_INITIAL_SET, EVENT_ALL_ACCESS);
+		//HANDLE waitHandle = CreateEventEx(nullptr, NULL, CREATE_EVENT_INITIAL_SET, EVENT_ALL_ACCESS);
 
-		ThrowIfFailed(mFence->SetEventOnCompletion(mCurrentFenceVal, waitHandle));
+		// Using an event handle is causing unexpected behavior currently. The event shouldn't return
+		// until the fence value is >= mCurrentFenceVal, but it returns one value early which is NOT
+		// what we want. When specifying a NULL handle in SetEventOnCompletion the call will simply
+		// block until the fence value reaches the desired value.
+		ThrowIfFailed(mFence->SetEventOnCompletion(mCurrentFenceVal, NULL));
 
-		WaitForSingleObject(waitHandle, INFINITE);
-		CloseHandle(waitHandle);
+		//WaitForSingleObject(waitHandle, INFINITE);
+		//CloseHandle(waitHandle);
 	}
 }
 
@@ -218,8 +232,8 @@ void Dx12Device::PresentSwapchain()
 	// for now just advance the global fence
 
 	++mCurrentFenceVal;
-
 	mCommandQueue->Signal(mFence.Get(), mCurrentFenceVal);
+
 }
 
 void Dx12Device::Create()
@@ -278,21 +292,6 @@ void Dx12Device::FlushQueue()
 	if (sDevice != nullptr)
 	{
 		sDevice->FlushCommandQueue();
-
-		// Moved to non static method
-		/*++sDevice->mCurrentFenceVal;
-
-		ThrowIfFailed(sDevice->mCommandQueue->Signal(sDevice->mFence.Get(), sDevice->mCurrentFenceVal));
-
-		if (sDevice->mFence->GetCompletedValue() < sDevice->mCurrentFenceVal)
-		{
-			HANDLE waitHandle = CreateEventEx(nullptr, false, false, EVENT_ALL_ACCESS);
-
-			ThrowIfFailed(sDevice->mFence->SetEventOnCompletion(sDevice->mCurrentFenceVal, waitHandle));
-
-			WaitForSingleObject(waitHandle, INFINITE);
-			CloseHandle(waitHandle);
-		}*/
 	}
 }
 
@@ -301,7 +300,7 @@ ID3D12Resource* Dx12Device::GetCurrentBackBuffer()
 	return sDevice->mSwapChainBuffer[sDevice->mCurrentBackBuffer].Get();
 }
 
-void Dx12Device::CreateRootSignature(CD3DX12_ROOT_SIGNATURE_DESC* desc, Microsoft::WRL::ComPtr<ID3D12RootSignature> out_rootSig)
+Microsoft::WRL::ComPtr<ID3D12RootSignature> Dx12Device::CreateRootSignature(CD3DX12_ROOT_SIGNATURE_DESC* desc)
 {
 	if (sDevice != nullptr)
 	{
@@ -317,20 +316,26 @@ void Dx12Device::CreateRootSignature(CD3DX12_ROOT_SIGNATURE_DESC* desc, Microsof
 		}
 		ThrowIfFailed(hr);
 
+		Microsoft::WRL::ComPtr<ID3D12RootSignature> out_rootSig = nullptr;
+
 		ThrowIfFailed(sDevice->mD3dDevice->CreateRootSignature(
 			0,
 			serializedRootSig->GetBufferPointer(),
 			serializedRootSig->GetBufferSize(),
 			IID_PPV_ARGS(out_rootSig.GetAddressOf())
 		));
+
+		return out_rootSig;
 	}
 }
 
-void Dx12Device::CreatePSO(D3D12_GRAPHICS_PIPELINE_STATE_DESC* desc, Microsoft::WRL::ComPtr<ID3D12PipelineState> out_pso)
+Microsoft::WRL::ComPtr<ID3D12PipelineState> Dx12Device::CreatePSO(D3D12_GRAPHICS_PIPELINE_STATE_DESC* desc)
 {
 	if (sDevice != nullptr)
 	{
+		Microsoft::WRL::ComPtr<ID3D12PipelineState> out_pso;
 		ThrowIfFailed(sDevice->mD3dDevice->CreateGraphicsPipelineState(desc, IID_PPV_ARGS(&out_pso)));
+		return out_pso;
 	}
 }
 
@@ -351,7 +356,8 @@ Microsoft::WRL::ComPtr<ID3D12CommandAllocator> Dx12Device::GetCurrentFrameAlloca
 	if (sDevice != nullptr)
 	{
 		// TODO: Get the actual command list allocator from the rame resource
-		return sDevice->mDirectCmdListAlloc;
+		// This is a very temporary method, need to actually organize these
+		return sDevice->mDirectCmdListAlloc[sDevice->mCurrentBackBuffer];
 	}
 	else
 	{
@@ -442,6 +448,8 @@ std::unique_ptr<Buffer> Dx12Device::CreateBuffer(const void* data, UINT64 buffer
 	CD3DX12_RESOURCE_BARRIER genericReadBarrier = CD3DX12_RESOURCE_BARRIER::Transition(newBuffer->mResource.Get(),
 		D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
 
+	sDevice->mCommandList->ResourceBarrier(1, &genericReadBarrier);
+
 	return newBuffer;
 }
 
@@ -459,4 +467,92 @@ std::unique_ptr<FrameBuffer> Dx12Device::CreateFrameBuffer(const void* data, UIN
 	}
 
 	return newFrameBuffer;
+}
+
+HRESULT Dx12Device::LoadTextureFromDDSFile(Texture* texture)
+{
+	HRESULT result = DirectX::CreateDDSTextureFromFile12(sDevice->mD3dDevice.Get(),
+		sDevice->mCommandList.Get(), texture->mFileName.c_str(),
+		texture->mResource, texture->mUploadHeap);
+
+	return result;
+}
+
+CD3DX12_CPU_DESCRIPTOR_HANDLE Dx12Device::CreateRenderTargetView(ID3D12Resource* resource, D3D12_RENDER_TARGET_VIEW_DESC* viewDesc)
+{
+	CD3DX12_CPU_DESCRIPTOR_HANDLE handle = Dx12Device::GetNextRtvDescriptorHandle();
+	sDevice->mD3dDevice->CreateRenderTargetView(resource, viewDesc, handle);
+
+	return handle;
+}
+
+CD3DX12_CPU_DESCRIPTOR_HANDLE Dx12Device::GetNextRtvDescriptorHandle()
+{
+	CD3DX12_CPU_DESCRIPTOR_HANDLE nextHandle(sDevice->mRtvHeap->GetCPUDescriptorHandleForHeapStart());
+	nextHandle.Offset(sDevice->mRtvHeapOffset++, sDevice->mRtvDescriptorSize);
+
+	return nextHandle;
+}
+
+
+CD3DX12_CPU_DESCRIPTOR_HANDLE Dx12Device::CreateDepthStencilView(ID3D12Resource* resource, D3D12_DEPTH_STENCIL_VIEW_DESC* viewDesc)
+{
+	CD3DX12_CPU_DESCRIPTOR_HANDLE handle = Dx12Device::GetNextDsvDescriptorHandle();
+	sDevice->mD3dDevice->CreateDepthStencilView(resource, viewDesc, handle);
+
+	return handle;
+}
+
+CD3DX12_CPU_DESCRIPTOR_HANDLE Dx12Device::GetNextDsvDescriptorHandle()
+{
+	CD3DX12_CPU_DESCRIPTOR_HANDLE nextHandle(sDevice->mDsvHeap->GetCPUDescriptorHandleForHeapStart());
+	nextHandle.Offset(sDevice->mDsvHeapOffset++, sDevice->mDsvDescriptorSize);
+
+	return nextHandle;
+}
+
+CD3DX12_CPU_DESCRIPTOR_HANDLE Dx12Device::CreateConstantBufferView(D3D12_CONSTANT_BUFFER_VIEW_DESC* viewDesc)
+{
+	CpuHandle handle = Dx12Device::GetNextCbvSrvUavDescriptorHandle();
+	sDevice->mD3dDevice->CreateConstantBufferView(viewDesc, handle.mCpuHandle);
+
+	return handle.mCpuHandle;
+}
+
+CpuHandle Dx12Device::CreateShaderResourceView(ID3D12Resource* resource, D3D12_SHADER_RESOURCE_VIEW_DESC* viewDesc)
+{
+	CpuHandle handle = Dx12Device::GetNextCbvSrvUavDescriptorHandle();
+	sDevice->mD3dDevice->CreateShaderResourceView(resource, viewDesc, handle.mCpuHandle);
+
+	return handle;
+}
+CD3DX12_CPU_DESCRIPTOR_HANDLE Dx12Device::CreateUnorderedAccessView(ID3D12Resource* resource, ID3D12Resource* counterResource, D3D12_UNORDERED_ACCESS_VIEW_DESC* viewDesc)
+{
+	CpuHandle handle = Dx12Device::GetNextCbvSrvUavDescriptorHandle();
+	sDevice->mD3dDevice->CreateUnorderedAccessView(resource, counterResource, viewDesc, handle.mCpuHandle);
+
+	return handle.mCpuHandle;
+}
+
+
+CpuHandle Dx12Device::GetNextCbvSrvUavDescriptorHandle()
+{
+	CD3DX12_CPU_DESCRIPTOR_HANDLE nextHandle(sDevice->mCbvSrvUavHeap->GetCPUDescriptorHandleForHeapStart());
+	nextHandle.Offset(sDevice->mCbvSrvUavHeapOffset, sDevice->mCbvSrvUavDescriptorSize);
+
+	CpuHandle outHandle = {};
+	outHandle.mCpuHandle = nextHandle;
+	outHandle.mOffset = sDevice->mCbvSrvUavHeapOffset;
+
+	CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(sDevice->mCbvSrvUavHeap->GetGPUDescriptorHandleForHeapStart());
+	gpuHandle.Offset(outHandle.mOffset, sDevice->mCbvSrvUavDescriptorSize);
+	outHandle.mGpuHandle = gpuHandle;
+	sDevice->mCbvSrvUavHeapOffset++;
+
+	return outHandle;
+}
+
+const std::array<ID3D12DescriptorHeap*, 3> Dx12Device::GetDescriptorHeaps()
+{
+	return { sDevice->mRtvHeap.Get(), sDevice->mDsvHeap.Get(), sDevice->mCbvSrvUavHeap.Get()};
 }

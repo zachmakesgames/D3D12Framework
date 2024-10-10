@@ -283,6 +283,8 @@ Mesh Mesh::LoadMeshFromObj(std::string file_name)
 	bounding_volume_radius = sqrt(furthest_len_sqr);
 	*/
 
+	file.close();
+
 	return returnMesh;
 }
 
@@ -290,7 +292,9 @@ Mesh::~Mesh()
 {
 	if (mVertexData != nullptr)
 	{
-		delete mVertexData;
-		mVertexData = nullptr;
+		// This is throwing invalid address errors, something wrong
+		// with the way the heap is allocated vs deleted I think?
+		//delete mVertexData;
+		//mVertexData = nullptr;
 	}
 }

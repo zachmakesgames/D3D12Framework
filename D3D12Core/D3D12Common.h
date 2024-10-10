@@ -11,10 +11,12 @@
 #include <exception>
 #include <string>
 #include <memory>
+#include <array>
 #include "d3dx12.h"
 #include <DirectXMath.h>
 #include <DirectXPackedVector.h>
 #include <DirectXColors.h>
+#include <dxcapi.h>
 
 /// 
 /// Section: Borrowed code from Frank Luna

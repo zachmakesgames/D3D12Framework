@@ -4,9 +4,17 @@
 #include "framework.h"
 #include "D3D12Framework.h"
 #include "Dx12Device.h"
+#include "D3D12Common.h"
 #include "GraphicsPass.h"
 #include "RenderObject.h"
 #include "Mesh.h"
+#include "Utils.h"
+#include "Vertex.h"
+#include "Texture.h"
+#include "ConstantBufferStructs.h"
+
+extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 614; }
+extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = u8".\\D3D12\\"; }
 
 #define MAX_LOADSTRING 100
 
@@ -44,50 +52,239 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return FALSE;
     }
 
+    HRESULT hr;
+
+    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_D3D12FRAMEWORK));
+
+    MSG msg;
+
     Dx12Device::Create();
-    Dx12Device::InitSwapchain(hWnd, 300, 300);
+    Dx12Device::InitSwapchain(hWnd, 600, 600);
 
     auto cmdListAlloc = Dx12Device::GetCurrentFrameAllocator();
     auto cmdList = Dx12Device::GetCommandList();
     auto cmdQueue = Dx12Device::GetCommandQueue();
 
+
     // Dont reset the allocator if its never been associated to a command list
     //cmdListAlloc->Reset();
-    HRESULT hr = cmdList->Reset(cmdListAlloc.Get(), nullptr);
+    hr = cmdList->Reset(cmdListAlloc.Get(), nullptr);
     if (FAILED(hr))
     {
         OutputDebugStringA("Failed to reset command list");
     }
 
-    D3D12_VIEWPORT viewPort = {};
-    viewPort.TopLeftX = 0;
-    viewPort.TopLeftY = 0;
-    viewPort.Width = 300;
-    viewPort.Height = 300;
-    viewPort.MinDepth = 0.0f;
-    viewPort.MaxDepth = 1.0f;
 
-    D3D12_RECT rect = { 0, 0, 300, 300 };
+    CD3DX12_DESCRIPTOR_RANGE textureTable0;
+    textureTable0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0);
 
-    cmdList->RSSetViewports(1, &viewPort);
-    cmdList->RSSetScissorRects(1, &rect);
+    CD3DX12_ROOT_PARAMETER slotRootParam[3];
+    slotRootParam[0].InitAsConstantBufferView(0);
+    slotRootParam[1].InitAsConstantBufferView(1);
+    slotRootParam[2].InitAsDescriptorTable(1, &textureTable0, D3D12_SHADER_VISIBILITY_PIXEL);
 
-    D3D12_CPU_DESCRIPTOR_HANDLE views[] = { Dx12Device::GetCurrentBackBufferView() };
-    D3D12_CPU_DESCRIPTOR_HANDLE dsv = Dx12Device::GetDepthStencilView();
-    cmdList->OMSetRenderTargets(1, views, true, &dsv);
+    auto samplers = D3dUtils::GetStaticSamplers();
 
-    float color[] = { 0.2, 0.2, 0.2, 1 };
-    cmdList->ClearRenderTargetView(Dx12Device::GetCurrentBackBufferView(), color, 1, &rect);
+    CD3DX12_ROOT_SIGNATURE_DESC mainRootSig(3, slotRootParam,
+        (UINT)samplers.size(), samplers.data(),
+        D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+
+    Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSig = Dx12Device::CreateRootSignature(&mainRootSig);
+
+    UINT vertexSize = sizeof(Vertex);
+
+    Mesh boxMesh = Mesh::LoadMeshFromObj("../../../Resources/Models/box.obj");
+    auto boxMeshBuffer = Dx12Device::CreateBuffer(boxMesh.mVertexData, sizeof(Vertex) * boxMesh.mVertexCount);
+    // Need to create a vertex buffer view
+    D3D12_VERTEX_BUFFER_VIEW vbv = {};
+    vbv.BufferLocation = boxMeshBuffer->mResource->GetGPUVirtualAddress();
+    vbv.SizeInBytes = boxMesh.mVertexCount * sizeof(Vertex);
+    vbv.StrideInBytes = sizeof(Vertex);
+
+    
+    auto vertexShader = D3dUtils::Dxc3CompileShader(L"../../../Resources/Shaders/test.hlsl", nullptr, L"vsMain", L"vs_6_6");
+    auto pixelShader = D3dUtils::Dxc3CompileShader(L"../../../Resources/Shaders/test.hlsl", nullptr, L"psMain", L"ps_6_6");
+   
+    Texture testTexture("TestPattern", L"../../../Resources/Textures/TestPattern.dds");
+    hr = Dx12Device::LoadTextureFromDDSFile(&testTexture);
+    if (FAILED(hr))
+    {
+        OutputDebugString(L"Failed to load DDS texture");
+    }
+
+    DirectX::XMMATRIX ident = DirectX::XMMatrixIdentity();
+    DirectX::XMFLOAT4X4 identF;
+
+    DirectX::XMStoreFloat4x4(&identF, ident);
+    cbWorld worldBuffer = {};
+    DirectX::XMFLOAT4X4 projection = identF;
+    DirectX::XMMATRIX projMat = DirectX::XMMatrixPerspectiveFovLH(0.25f * DirectX::XM_PI, 300.f / 300.f, 1.0f, 1000.0f);
+
+    DirectX::XMStoreFloat4x4(&projection, XMMatrixTranspose(projMat));
+
+    worldBuffer.mProjMat = projection;
+    worldBuffer.mViewMat = identF;
+
+
+    // Push the box out in front of the camera (Z axis) and slightly to the right (X axis)
+    // so we can see the projection is working right.
+    DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(10, 0, 50);
+    DirectX::XMFLOAT4X4 translationFloat;
+    DirectX::XMStoreFloat4x4(&translationFloat, XMMatrixTranspose(translation));
+    cbObject objectBuffer = {};
+    objectBuffer.mWorldTransform = translationFloat;
+
+    auto worldCBuffer = Dx12Device::CreateBuffer(&worldBuffer, sizeof(cbWorld));
+    auto objectCBuffer = Dx12Device::CreateBuffer(&objectBuffer, sizeof(cbObject));
+
+    D3D12_CONSTANT_BUFFER_VIEW_DESC worldCBufferViewDesc = {};
+    worldCBufferViewDesc.BufferLocation = worldCBuffer->mResource->GetGPUVirtualAddress();
+    worldCBufferViewDesc.SizeInBytes = 256;
+
+    D3D12_CONSTANT_BUFFER_VIEW_DESC objectCBufferViewDesc = {};
+    objectCBufferViewDesc.BufferLocation = objectCBuffer->mResource->GetGPUVirtualAddress();
+    objectCBufferViewDesc.SizeInBytes = 256;
+
+    auto worldCBV = Dx12Device::CreateConstantBufferView(&worldCBufferViewDesc);
+    auto objectCBV = Dx12Device::CreateConstantBufferView(&objectCBufferViewDesc);
+    
+    D3D12_SHADER_RESOURCE_VIEW_DESC textureSrvDesc = {};
+    textureSrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    textureSrvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+    textureSrvDesc.Texture2D.MostDetailedMip = 0;
+    textureSrvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+    textureSrvDesc.Format = testTexture.mResource->GetDesc().Format;
+    textureSrvDesc.Texture2D.MipLevels = testTexture.mResource->GetDesc().MipLevels;
+
+    auto textureSrvHandle = Dx12Device::CreateShaderResourceView(testTexture.mResource.Get(), &textureSrvDesc);
+
+    std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayout = {
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+    };
+
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
+    ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+
+    psoDesc.InputLayout = { inputLayout.data(), (UINT)inputLayout.size() };
+    psoDesc.pRootSignature = rootSig.Get();
+    psoDesc.VS = { reinterpret_cast<BYTE*>(vertexShader->GetBufferPointer()), vertexShader->GetBufferSize()};
+    psoDesc.PS = { reinterpret_cast<BYTE*>(pixelShader->GetBufferPointer()), pixelShader->GetBufferSize() };
+    psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+    psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+    psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+    psoDesc.SampleMask = UINT_MAX;
+    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+    psoDesc.NumRenderTargets = 1;
+    psoDesc.RTVFormats[0] = Dx12Device::GetBackBufferFormat();
+    psoDesc.SampleDesc.Count = 1;
+    psoDesc.SampleDesc.Quality = 0;
+    psoDesc.DSVFormat = Dx12Device::GetDepthStencilFormat();
+
+    Microsoft::WRL::ComPtr<ID3D12PipelineState> pso = Dx12Device::CreatePSO(&psoDesc);
+
 
     cmdList->Close();
 
     ID3D12CommandList* lists[] = { cmdList.Get() };
     cmdQueue->ExecuteCommandLists(_countof(lists), lists);
+    Dx12Device::FlushQueue();
 
-    Dx12Device::Present();
+    // Draw a few frames to have enough time to capture in Pix for debugging
+    for (int i = 0; i < 1000; ++i)
+    {
+        std::wstring framenum = L"Frame number: " + std::to_wstring(i) + L"\r\n";
+        OutputDebugString(framenum.c_str());
+        cmdListAlloc = Dx12Device::GetCurrentFrameAllocator();
+        cmdListAlloc->Reset();
+
+        cmdList->Reset(cmdListAlloc.Get(), pso.Get());
+
+        D3D12_VIEWPORT viewPort = {};
+        viewPort.TopLeftX = 0;
+        viewPort.TopLeftY = 0;
+        viewPort.Width = 600;
+        viewPort.Height = 600;
+        viewPort.MinDepth = 0.0f;
+        viewPort.MaxDepth = 1.0f;
+
+        D3D12_RECT rect = { 0, 0, 600, 600 };
+
+        cmdList->RSSetViewports(1, &viewPort);
+        cmdList->RSSetScissorRects(1, &rect);
+
+        D3D12_CPU_DESCRIPTOR_HANDLE views[] = { Dx12Device::GetCurrentBackBufferView() };
+        D3D12_CPU_DESCRIPTOR_HANDLE dsv = Dx12Device::GetDepthStencilView();
+        cmdList->OMSetRenderTargets(1, views, true, &dsv);
+
+        // Transition to render target state
+        CD3DX12_RESOURCE_BARRIER presentToRenderTarget = CD3DX12_RESOURCE_BARRIER::Transition(Dx12Device::GetCurrentBackBuffer(),
+            D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        cmdList->ResourceBarrier(1, &presentToRenderTarget);
+
+
+        float color[] = { 0.2, 0.2, 0.5, 1 };
+        cmdList->ClearRenderTargetView(Dx12Device::GetCurrentBackBufferView(), color, 1, &rect);
+        cmdList->ClearDepthStencilView(Dx12Device::GetDepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+
+        // The last heap is the CbvSrvUav heap, only bind it for now
+        auto heaps = Dx12Device::GetDescriptorHeaps();
+        cmdList->SetDescriptorHeaps(1, &heaps[2]);
+
+        cmdList->SetGraphicsRootSignature(rootSig.Get());
+
+
+        cmdList->SetGraphicsRootConstantBufferView(0, worldCBuffer->mResource->GetGPUVirtualAddress());
+        cmdList->SetGraphicsRootConstantBufferView(1, objectCBuffer->mResource->GetGPUVirtualAddress());    
+        cmdList->SetGraphicsRootDescriptorTable(2, textureSrvHandle.mGpuHandle);
+
+        cmdList->SetPipelineState(pso.Get());
+
+
+        cmdList->IASetVertexBuffers(0, 1, &vbv);
+        cmdList->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+
+        //should have 36 vertices for a cube
+        UINT count = boxMesh.mVertexCount;
+        cmdList->DrawInstanced(count, 1, 0, 0);
+
+
+
+        // Transition to present state
+        CD3DX12_RESOURCE_BARRIER renderTargetToPresent = CD3DX12_RESOURCE_BARRIER::Transition(Dx12Device::GetCurrentBackBuffer(),
+            D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+        cmdList->ResourceBarrier(1, &renderTargetToPresent);
+
+
+        cmdList->Close();
+
+        ID3D12CommandList* lists[] = { cmdList.Get() };
+        cmdQueue->ExecuteCommandLists(_countof(lists), lists);
+
+
+        Dx12Device::Present();
+        Dx12Device::FlushQueue();
+
+        // Need to handle messages in order to capture frames in pix,
+        // oops lol
+        if (GetMessage(&msg, nullptr, 0, 0))
+        {
+            if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
+            {
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
+        }
+
+    }
     
 
-    RenderObject carObject;
+    /*RenderObject carObject;
     RenderObject trackObject;
     RenderObject treeObject;
 
@@ -119,14 +316,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     std::string graphString = testGraph.Walk();
 
-    OutputDebugStringA(graphString.c_str());
+    OutputDebugStringA(graphString.c_str());*/
 
 
 
 
-    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_D3D12FRAMEWORK));
-
-    MSG msg;
+    
 
     // Main message loop:
     while (GetMessage(&msg, nullptr, 0, 0))
@@ -183,8 +378,13 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, HWND* hWnd)
 {
    hInst = hInstance; // Store instance handle in our global variable
 
+   RECT r = { 0, 0, 600, 600 };
+   AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW, true);
+
+   /**hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);*/
    *hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+       100, 200, r.right - r.left, r.bottom - r.top, nullptr, nullptr, hInstance, nullptr);
 
    if (!hWnd)
    {

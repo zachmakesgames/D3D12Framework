@@ -8,13 +8,20 @@
 #include "D3D12Common.h"
 #include <vector>
 #include "Buffer.h"
+#include "Texture.h"
+#include "DDSTextureLoader.h"
 
-#pragma comment(lib, "d3dcompiler.lib")
+//#pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "dxcompiler.lib")
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "dxgi.lib")
 
-
+struct CpuHandle
+{
+	UINT mOffset;
+	CD3DX12_CPU_DESCRIPTOR_HANDLE mCpuHandle;
+	CD3DX12_GPU_DESCRIPTOR_HANDLE mGpuHandle;
+};
 
 class __declspec(dllexport) Dx12Device
 {
@@ -30,8 +37,8 @@ public:
 	static void DestroySwapchain();
 	static void FlushQueue();
 	static ID3D12Resource* GetCurrentBackBuffer();
-	static void CreateRootSignature(CD3DX12_ROOT_SIGNATURE_DESC* desc, Microsoft::WRL::ComPtr<ID3D12RootSignature> out_rootSig);
-	static void CreatePSO(D3D12_GRAPHICS_PIPELINE_STATE_DESC* desc, Microsoft::WRL::ComPtr<ID3D12PipelineState> out_pso);
+	static Microsoft::WRL::ComPtr<ID3D12RootSignature> CreateRootSignature(CD3DX12_ROOT_SIGNATURE_DESC* desc);
+	static Microsoft::WRL::ComPtr<ID3D12PipelineState> CreatePSO(D3D12_GRAPHICS_PIPELINE_STATE_DESC* desc);
 
 	static Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> GetCommandList();
 	static Microsoft::WRL::ComPtr<ID3D12CommandAllocator> GetCurrentFrameAllocator();
@@ -49,6 +56,20 @@ public:
 	static std::unique_ptr<Buffer> CreateBuffer(const void* data, UINT64 bufferSize);
 	static std::unique_ptr<FrameBuffer> CreateFrameBuffer(const void* data, UINT64 bufferSize);
 
+	static HRESULT LoadTextureFromDDSFile(Texture* texture);
+
+	static CD3DX12_CPU_DESCRIPTOR_HANDLE GetNextRtvDescriptorHandle();
+	static CD3DX12_CPU_DESCRIPTOR_HANDLE CreateRenderTargetView(ID3D12Resource* resource, D3D12_RENDER_TARGET_VIEW_DESC* viewDesc);
+
+	static CD3DX12_CPU_DESCRIPTOR_HANDLE GetNextDsvDescriptorHandle();
+	static CD3DX12_CPU_DESCRIPTOR_HANDLE CreateDepthStencilView(ID3D12Resource* resource, D3D12_DEPTH_STENCIL_VIEW_DESC* viewDesc);
+
+	static CpuHandle GetNextCbvSrvUavDescriptorHandle();
+	static CD3DX12_CPU_DESCRIPTOR_HANDLE CreateConstantBufferView(D3D12_CONSTANT_BUFFER_VIEW_DESC* viewDesc);
+	static CpuHandle CreateShaderResourceView(ID3D12Resource* resource, D3D12_SHADER_RESOURCE_VIEW_DESC* viewDesc);
+	static CD3DX12_CPU_DESCRIPTOR_HANDLE CreateUnorderedAccessView(ID3D12Resource* resource, ID3D12Resource* counterResource, D3D12_UNORDERED_ACCESS_VIEW_DESC* viewDesc);
+
+	static const std::array<ID3D12DescriptorHeap*, 3> GetDescriptorHeaps();
 
 private:
 	Dx12Device();
@@ -56,24 +77,32 @@ private:
 	void FlushCommandQueue();
 	void PresentSwapchain();
 
+	static const int mSwapChainBufferCount = 3;
+
 	Microsoft::WRL::ComPtr<IDXGIFactory4> mDxgiFactory;
 	Microsoft::WRL::ComPtr<IDXGISwapChain> mSwapChain;
 	Microsoft::WRL::ComPtr<ID3D12Device> mD3dDevice;
 	Microsoft::WRL::ComPtr<ID3D12Fence> mFence;
 
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue> mCommandQueue;
-	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> mDirectCmdListAlloc;
+
+	/// TODO: Change this
+	//Microsoft::WRL::ComPtr<ID3D12CommandAllocator> mDirectCmdListAlloc[mSwapChainBufferCount];
+	std::array< Microsoft::WRL::ComPtr<ID3D12CommandAllocator>, mSwapChainBufferCount> mDirectCmdListAlloc;
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> mCommandList;
 
-	static const int mSwapChainBufferCount = 3;
+	
 	int mCurrentBackBuffer = 0;
 	Microsoft::WRL::ComPtr<ID3D12Resource> mSwapChainBuffer[mSwapChainBufferCount];
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> mDepthStencilBuffer;
 
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mRtvHeap;
+	UINT mRtvHeapOffset = 0;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mDsvHeap;
+	UINT mDsvHeapOffset = 0;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mCbvSrvUavHeap;
+	UINT mCbvSrvUavHeapOffset = 0;
 
 	static const DXGI_FORMAT mBackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	static const DXGI_FORMAT mDepthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
