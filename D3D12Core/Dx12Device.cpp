@@ -469,11 +469,24 @@ std::unique_ptr<FrameBuffer> Dx12Device::CreateFrameBuffer(const void* data, UIN
 	return newFrameBuffer;
 }
 
-HRESULT Dx12Device::LoadTextureFromDDSFile(Texture* texture)
+HRESULT Dx12Device::LoadTextureFromDDSFile(Texture* texture, UINT mostDetailedMip, FLOAT minLodClamp)
 {
 	HRESULT result = DirectX::CreateDDSTextureFromFile12(sDevice->mD3dDevice.Get(),
 		sDevice->mCommandList.Get(), texture->mFileName.c_str(),
 		texture->mResource, texture->mUploadHeap);
+
+	if (!FAILED(result))
+	{
+		D3D12_SHADER_RESOURCE_VIEW_DESC textureSrvDesc = {};
+		textureSrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		textureSrvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		textureSrvDesc.Texture2D.MostDetailedMip = mostDetailedMip;
+		textureSrvDesc.Texture2D.ResourceMinLODClamp = minLodClamp;
+		textureSrvDesc.Format = texture->mResource->GetDesc().Format;
+		textureSrvDesc.Texture2D.MipLevels = texture->mResource->GetDesc().MipLevels;
+
+		texture->mSrvHandle = Dx12Device::CreateShaderResourceView(texture->mResource.Get(), &textureSrvDesc);
+	}
 
 	return result;
 }

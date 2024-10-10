@@ -94,9 +94,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     UINT vertexSize = sizeof(Vertex);
 
+    // TODO: Make this all part of loading the mesh, create the vertex buffer and the view all in one go
     Mesh boxMesh = Mesh::LoadMeshFromObj("../../../Resources/Models/box.obj");
     auto boxMeshBuffer = Dx12Device::CreateBuffer(boxMesh.mVertexData, sizeof(Vertex) * boxMesh.mVertexCount);
     // Need to create a vertex buffer view
+    
     D3D12_VERTEX_BUFFER_VIEW vbv = {};
     vbv.BufferLocation = boxMeshBuffer->mResource->GetGPUVirtualAddress();
     vbv.SizeInBytes = boxMesh.mVertexCount * sizeof(Vertex);
@@ -112,6 +114,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     {
         OutputDebugString(L"Failed to load DDS texture");
     }
+
 
     DirectX::XMMATRIX ident = DirectX::XMMatrixIdentity();
     DirectX::XMFLOAT4X4 identF;
@@ -155,15 +158,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     auto worldCBV = Dx12Device::CreateConstantBufferView(&worldCBufferViewDesc);
     auto objectCBV = Dx12Device::CreateConstantBufferView(&objectCBufferViewDesc);
     
-    D3D12_SHADER_RESOURCE_VIEW_DESC textureSrvDesc = {};
-    textureSrvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    textureSrvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-    textureSrvDesc.Texture2D.MostDetailedMip = 0;
-    textureSrvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-    textureSrvDesc.Format = testTexture.mResource->GetDesc().Format;
-    textureSrvDesc.Texture2D.MipLevels = testTexture.mResource->GetDesc().MipLevels;
-
-    auto textureSrvHandle = Dx12Device::CreateShaderResourceView(testTexture.mResource.Get(), &textureSrvDesc);
 
     std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayout = {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -246,7 +240,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
         cmdList->SetGraphicsRootConstantBufferView(0, worldCBuffer->mResource->GetGPUVirtualAddress());
         cmdList->SetGraphicsRootConstantBufferView(1, objectCBuffer->mResource->GetGPUVirtualAddress());    
-        cmdList->SetGraphicsRootDescriptorTable(2, textureSrvHandle.mGpuHandle);
+        cmdList->SetGraphicsRootDescriptorTable(2, testTexture.mSrvHandle.mGpuHandle);
 
         cmdList->SetPipelineState(pso.Get());
 

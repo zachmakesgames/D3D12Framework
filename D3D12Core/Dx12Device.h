@@ -50,7 +50,7 @@ public:
 	static std::unique_ptr<Buffer> CreateBuffer(const void* data, UINT64 bufferSize);
 	static std::unique_ptr<FrameBuffer> CreateFrameBuffer(const void* data, UINT64 bufferSize);
 
-	static HRESULT LoadTextureFromDDSFile(Texture* texture);
+	static HRESULT LoadTextureFromDDSFile(Texture* texture, UINT mostDetailedMip = 0, FLOAT minLodClamp = 0.0f);
 
 	static ResourceViewHandle GetNextRtvDescriptorHandle();
 	static ResourceViewHandle CreateRenderTargetView(ID3D12Resource* resource, D3D12_RENDER_TARGET_VIEW_DESC* viewDesc);
