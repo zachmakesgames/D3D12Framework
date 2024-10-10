@@ -478,69 +478,89 @@ HRESULT Dx12Device::LoadTextureFromDDSFile(Texture* texture)
 	return result;
 }
 
-CD3DX12_CPU_DESCRIPTOR_HANDLE Dx12Device::CreateRenderTargetView(ID3D12Resource* resource, D3D12_RENDER_TARGET_VIEW_DESC* viewDesc)
+ResourceViewHandle Dx12Device::CreateRenderTargetView(ID3D12Resource* resource, D3D12_RENDER_TARGET_VIEW_DESC* viewDesc)
 {
-	CD3DX12_CPU_DESCRIPTOR_HANDLE handle = Dx12Device::GetNextRtvDescriptorHandle();
-	sDevice->mD3dDevice->CreateRenderTargetView(resource, viewDesc, handle);
+	ResourceViewHandle handle = Dx12Device::GetNextRtvDescriptorHandle();
+	sDevice->mD3dDevice->CreateRenderTargetView(resource, viewDesc, handle.mCpuHandle);
 
 	return handle;
 }
 
-CD3DX12_CPU_DESCRIPTOR_HANDLE Dx12Device::GetNextRtvDescriptorHandle()
+ResourceViewHandle Dx12Device::GetNextRtvDescriptorHandle()
 {
 	CD3DX12_CPU_DESCRIPTOR_HANDLE nextHandle(sDevice->mRtvHeap->GetCPUDescriptorHandleForHeapStart());
-	nextHandle.Offset(sDevice->mRtvHeapOffset++, sDevice->mRtvDescriptorSize);
+	nextHandle.Offset(sDevice->mRtvHeapOffset, sDevice->mRtvDescriptorSize);
 
-	return nextHandle;
-}
+	CD3DX12_GPU_DESCRIPTOR_HANDLE nextGpuHandle(sDevice->mRtvHeap->GetGPUDescriptorHandleForHeapStart());
+	nextGpuHandle.Offset(sDevice->mRtvHeapOffset, sDevice->mRtvDescriptorSize);
+	
+	ResourceViewHandle handle;
+	handle.mOffset = sDevice->mRtvHeapOffset;
+	handle.mCpuHandle = nextHandle;
+	handle.mGpuHandle = nextGpuHandle;
 
-
-CD3DX12_CPU_DESCRIPTOR_HANDLE Dx12Device::CreateDepthStencilView(ID3D12Resource* resource, D3D12_DEPTH_STENCIL_VIEW_DESC* viewDesc)
-{
-	CD3DX12_CPU_DESCRIPTOR_HANDLE handle = Dx12Device::GetNextDsvDescriptorHandle();
-	sDevice->mD3dDevice->CreateDepthStencilView(resource, viewDesc, handle);
+	sDevice->mRtvHeapOffset++;
 
 	return handle;
 }
 
-CD3DX12_CPU_DESCRIPTOR_HANDLE Dx12Device::GetNextDsvDescriptorHandle()
+
+ResourceViewHandle Dx12Device::CreateDepthStencilView(ID3D12Resource* resource, D3D12_DEPTH_STENCIL_VIEW_DESC* viewDesc)
+{
+	ResourceViewHandle handle = Dx12Device::GetNextDsvDescriptorHandle();
+	sDevice->mD3dDevice->CreateDepthStencilView(resource, viewDesc, handle.mCpuHandle);
+
+	return handle;
+}
+
+ResourceViewHandle Dx12Device::GetNextDsvDescriptorHandle()
 {
 	CD3DX12_CPU_DESCRIPTOR_HANDLE nextHandle(sDevice->mDsvHeap->GetCPUDescriptorHandleForHeapStart());
-	nextHandle.Offset(sDevice->mDsvHeapOffset++, sDevice->mDsvDescriptorSize);
+	nextHandle.Offset(sDevice->mDsvHeapOffset, sDevice->mDsvDescriptorSize);
 
-	return nextHandle;
+	CD3DX12_GPU_DESCRIPTOR_HANDLE nextGpuHandle(sDevice->mDsvHeap->GetGPUDescriptorHandleForHeapStart());
+	nextGpuHandle.Offset(sDevice->mDsvHeapOffset, sDevice->mDsvDescriptorSize);
+
+	ResourceViewHandle handle;
+	handle.mOffset = sDevice->mDsvHeapOffset;
+	handle.mCpuHandle = nextHandle;
+	handle.mGpuHandle = nextGpuHandle;
+
+	sDevice->mDsvHeapOffset++;
+
+	return handle;
 }
 
-CD3DX12_CPU_DESCRIPTOR_HANDLE Dx12Device::CreateConstantBufferView(D3D12_CONSTANT_BUFFER_VIEW_DESC* viewDesc)
+ResourceViewHandle Dx12Device::CreateConstantBufferView(D3D12_CONSTANT_BUFFER_VIEW_DESC* viewDesc)
 {
-	CpuHandle handle = Dx12Device::GetNextCbvSrvUavDescriptorHandle();
+	ResourceViewHandle handle = Dx12Device::GetNextCbvSrvUavDescriptorHandle();
 	sDevice->mD3dDevice->CreateConstantBufferView(viewDesc, handle.mCpuHandle);
 
-	return handle.mCpuHandle;
+	return handle;
 }
 
-CpuHandle Dx12Device::CreateShaderResourceView(ID3D12Resource* resource, D3D12_SHADER_RESOURCE_VIEW_DESC* viewDesc)
+ResourceViewHandle Dx12Device::CreateShaderResourceView(ID3D12Resource* resource, D3D12_SHADER_RESOURCE_VIEW_DESC* viewDesc)
 {
-	CpuHandle handle = Dx12Device::GetNextCbvSrvUavDescriptorHandle();
+	ResourceViewHandle handle = Dx12Device::GetNextCbvSrvUavDescriptorHandle();
 	sDevice->mD3dDevice->CreateShaderResourceView(resource, viewDesc, handle.mCpuHandle);
 
 	return handle;
 }
-CD3DX12_CPU_DESCRIPTOR_HANDLE Dx12Device::CreateUnorderedAccessView(ID3D12Resource* resource, ID3D12Resource* counterResource, D3D12_UNORDERED_ACCESS_VIEW_DESC* viewDesc)
+ResourceViewHandle Dx12Device::CreateUnorderedAccessView(ID3D12Resource* resource, ID3D12Resource* counterResource, D3D12_UNORDERED_ACCESS_VIEW_DESC* viewDesc)
 {
-	CpuHandle handle = Dx12Device::GetNextCbvSrvUavDescriptorHandle();
+	ResourceViewHandle handle = Dx12Device::GetNextCbvSrvUavDescriptorHandle();
 	sDevice->mD3dDevice->CreateUnorderedAccessView(resource, counterResource, viewDesc, handle.mCpuHandle);
 
-	return handle.mCpuHandle;
+	return handle;
 }
 
 
-CpuHandle Dx12Device::GetNextCbvSrvUavDescriptorHandle()
+ResourceViewHandle Dx12Device::GetNextCbvSrvUavDescriptorHandle()
 {
 	CD3DX12_CPU_DESCRIPTOR_HANDLE nextHandle(sDevice->mCbvSrvUavHeap->GetCPUDescriptorHandleForHeapStart());
 	nextHandle.Offset(sDevice->mCbvSrvUavHeapOffset, sDevice->mCbvSrvUavDescriptorSize);
 
-	CpuHandle outHandle = {};
+	ResourceViewHandle outHandle = {};
 	outHandle.mCpuHandle = nextHandle;
 	outHandle.mOffset = sDevice->mCbvSrvUavHeapOffset;
 

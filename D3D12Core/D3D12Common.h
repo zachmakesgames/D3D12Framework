@@ -18,6 +18,14 @@
 #include <DirectXColors.h>
 #include <dxcapi.h>
 
+
+struct ResourceViewHandle
+{
+    UINT mOffset;
+    CD3DX12_CPU_DESCRIPTOR_HANDLE mCpuHandle;
+    CD3DX12_GPU_DESCRIPTOR_HANDLE mGpuHandle;
+};
+
 /// 
 /// Section: Borrowed code from Frank Luna
 /// 

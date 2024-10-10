@@ -12,4 +12,6 @@ public:
 	std::wstring mFileName = L"";
 	Microsoft::WRL::ComPtr<ID3D12Resource> mResource = nullptr;
 	Microsoft::WRL::ComPtr<ID3D12Resource> mUploadHeap = nullptr;
+
+	ResourceViewHandle mSrvHandle;
 };

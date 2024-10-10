@@ -16,12 +16,6 @@
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "dxgi.lib")
 
-struct CpuHandle
-{
-	UINT mOffset;
-	CD3DX12_CPU_DESCRIPTOR_HANDLE mCpuHandle;
-	CD3DX12_GPU_DESCRIPTOR_HANDLE mGpuHandle;
-};
 
 class __declspec(dllexport) Dx12Device
 {
@@ -58,16 +52,16 @@ public:
 
 	static HRESULT LoadTextureFromDDSFile(Texture* texture);
 
-	static CD3DX12_CPU_DESCRIPTOR_HANDLE GetNextRtvDescriptorHandle();
-	static CD3DX12_CPU_DESCRIPTOR_HANDLE CreateRenderTargetView(ID3D12Resource* resource, D3D12_RENDER_TARGET_VIEW_DESC* viewDesc);
+	static ResourceViewHandle GetNextRtvDescriptorHandle();
+	static ResourceViewHandle CreateRenderTargetView(ID3D12Resource* resource, D3D12_RENDER_TARGET_VIEW_DESC* viewDesc);
 
-	static CD3DX12_CPU_DESCRIPTOR_HANDLE GetNextDsvDescriptorHandle();
-	static CD3DX12_CPU_DESCRIPTOR_HANDLE CreateDepthStencilView(ID3D12Resource* resource, D3D12_DEPTH_STENCIL_VIEW_DESC* viewDesc);
+	static ResourceViewHandle GetNextDsvDescriptorHandle();
+	static ResourceViewHandle CreateDepthStencilView(ID3D12Resource* resource, D3D12_DEPTH_STENCIL_VIEW_DESC* viewDesc);
 
-	static CpuHandle GetNextCbvSrvUavDescriptorHandle();
-	static CD3DX12_CPU_DESCRIPTOR_HANDLE CreateConstantBufferView(D3D12_CONSTANT_BUFFER_VIEW_DESC* viewDesc);
-	static CpuHandle CreateShaderResourceView(ID3D12Resource* resource, D3D12_SHADER_RESOURCE_VIEW_DESC* viewDesc);
-	static CD3DX12_CPU_DESCRIPTOR_HANDLE CreateUnorderedAccessView(ID3D12Resource* resource, ID3D12Resource* counterResource, D3D12_UNORDERED_ACCESS_VIEW_DESC* viewDesc);
+	static ResourceViewHandle GetNextCbvSrvUavDescriptorHandle();
+	static ResourceViewHandle CreateConstantBufferView(D3D12_CONSTANT_BUFFER_VIEW_DESC* viewDesc);
+	static ResourceViewHandle CreateShaderResourceView(ID3D12Resource* resource, D3D12_SHADER_RESOURCE_VIEW_DESC* viewDesc);
+	static ResourceViewHandle CreateUnorderedAccessView(ID3D12Resource* resource, ID3D12Resource* counterResource, D3D12_UNORDERED_ACCESS_VIEW_DESC* viewDesc);
 
 	static const std::array<ID3D12DescriptorHeap*, 3> GetDescriptorHeaps();
 

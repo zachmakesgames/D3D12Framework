@@ -129,9 +129,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     // Push the box out in front of the camera (Z axis) and slightly to the right (X axis)
     // so we can see the projection is working right.
-    DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(10, 0, 50);
+    DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(0, 0, 10);
+    DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationX(0.3 * DirectX::XM_PI);
+    DirectX::XMMATRIX rotation2 = DirectX::XMMatrixRotationY(0.3 * DirectX::XM_PI);
+
+    DirectX::XMMATRIX rot = DirectX::XMMatrixMultiply(rotation, rotation2);
+
+    DirectX::XMMATRIX transform = DirectX::XMMatrixMultiply(rot, translation);
     DirectX::XMFLOAT4X4 translationFloat;
-    DirectX::XMStoreFloat4x4(&translationFloat, XMMatrixTranspose(translation));
+    DirectX::XMStoreFloat4x4(&translationFloat, XMMatrixTranspose(transform));
     cbObject objectBuffer = {};
     objectBuffer.mWorldTransform = translationFloat;
 
