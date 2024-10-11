@@ -26,6 +26,7 @@
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DDSTextureLoader.h" />
     <ClInclude Include="Dx12Device.h" />
+    <ClInclude Include="GBuffer.h" />
     <ClInclude Include="GraphicsPass.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="RenderObject.h" />
@@ -38,6 +39,7 @@
     <ClCompile Include="D3D12Common.cpp" />
     <ClCompile Include="DDSTextureLoader.cpp" />
     <ClCompile Include="Dx12Device.cpp" />
+    <ClCompile Include="GBuffer.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="RenderObject.cpp" />
   </ItemGroup>

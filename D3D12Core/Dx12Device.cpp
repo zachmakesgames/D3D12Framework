@@ -195,6 +195,8 @@ void Dx12Device::ResizeSwapchain(int swapchainWidth, int swapchainHeight)
 		mCommandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
 
 		FlushCommandQueue();
+
+		// TODO: Resize the GBuffer here as well
 	}
 	else
 	{
@@ -276,6 +278,9 @@ void Dx12Device::InitSwapchain(HWND window, int swapchainWidth, int swapchainHei
 
 		// Create back buffer and depth buffer resources
 		sDevice->ResizeSwapchain(swapchainWidth, swapchainHeight);
+
+		sDevice->InitGBuffer();
+		sDevice->ResizeGBuffer(swapchainWidth, swapchainHeight);
 	}
 }
 
@@ -588,4 +593,123 @@ ResourceViewHandle Dx12Device::GetNextCbvSrvUavDescriptorHandle()
 const std::array<ID3D12DescriptorHeap*, 3> Dx12Device::GetDescriptorHeaps()
 {
 	return { sDevice->mRtvHeap.Get(), sDevice->mDsvHeap.Get(), sDevice->mCbvSrvUavHeap.Get()};
+}
+
+void Dx12Device::InitGBuffer()
+{
+	// Create specific descriptor heaps for the GBuffer so that only live resources and the back buffers
+	// live on the main heaps. The main heaps may need to be reset when changing scenes but the GBuffer heaps
+	// should stay the same for the lifetime of the app
+	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
+	rtvHeapDesc.NumDescriptors = 6;
+	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	rtvHeapDesc.NodeMask = 0;
+
+
+	ThrowIfFailed(mD3dDevice->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(mGBuffer.mRtvHeap.GetAddressOf())));
+
+	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
+	dsvHeapDesc.NumDescriptors = 6;
+	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	dsvHeapDesc.NodeMask = 0;
+
+	ThrowIfFailed(mD3dDevice->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(mGBuffer.mDsvHeap.GetAddressOf())));
+
+	D3D12_DESCRIPTOR_HEAP_DESC cbvSrvUavHeapDesc = {};
+	cbvSrvUavHeapDesc.NumDescriptors = 6;
+	cbvSrvUavHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	cbvSrvUavHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	cbvSrvUavHeapDesc.NodeMask = 0;
+
+	ThrowIfFailed(mD3dDevice->CreateDescriptorHeap(&cbvSrvUavHeapDesc, IID_PPV_ARGS(mGBuffer.mSrvHeap.GetAddressOf())));
+}
+
+void Dx12Device::ResizeGBuffer(UINT width, UINT height)
+{
+	// Create the committed resources for each gbuffer RT
+	mGBuffer.mWidth = width;
+	mGBuffer.mHeight = height;
+
+	BuildGBufferResources();
+	BuildGBufferDescriptors();
+}
+
+void Dx12Device::BuildGBufferResources()
+{
+	for (int i = 0; i < 6; ++i)
+	{
+		mGBuffer.mGBuffer[i].Reset();
+	}
+
+
+	D3D12_RESOURCE_DESC texDesc;
+	ZeroMemory(&texDesc, sizeof(D3D12_RESOURCE_DESC));
+	texDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	texDesc.Alignment = 0;
+	texDesc.Width = mGBuffer.mWidth;
+	texDesc.Height = mGBuffer.mHeight;
+	texDesc.DepthOrArraySize = 1;
+	texDesc.MipLevels = 1;
+	texDesc.Format = mGBuffer.mFormat;
+	// TODO: Add MSAA stuff here
+	texDesc.SampleDesc.Count = 1;
+	texDesc.SampleDesc.Quality = 0;
+	texDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	texDesc.Flags =
+		(D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET |
+			D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+
+	D3D12_CLEAR_VALUE optClear;
+	optClear.Format = mGBuffer.mFormat;
+	optClear.Color[0] = 0.0f;
+	optClear.Color[1] = 0.0f;
+	optClear.Color[2] = 0.0f;
+	optClear.Color[3] = 0.0f;
+
+	CD3DX12_HEAP_PROPERTIES defaultHeap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+	for (int i = 0; i < 6; ++i)
+	{
+		ThrowIfFailed(mD3dDevice->CreateCommittedResource(
+			&defaultHeap,
+			D3D12_HEAP_FLAG_NONE,
+			&texDesc,
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			&optClear,
+			IID_PPV_ARGS(&mGBuffer.mGBuffer[i])));
+	}
+}
+
+void Dx12Device::BuildGBufferDescriptors()
+{
+	// Create the resource view descriptors
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.Format = mGBuffer.mFormat;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	srvDesc.Texture2D.MostDetailedMip = 0;
+	srvDesc.Texture2D.MipLevels = 1;
+	srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+	srvDesc.Texture2D.PlaneSlice = 0;
+
+	CD3DX12_CPU_DESCRIPTOR_HANDLE cpuSrvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mGBuffer.mSrvHeap->GetCPUDescriptorHandleForHeapStart());
+	for (int i = 0; i < 6; ++i)
+	{
+		mD3dDevice->CreateShaderResourceView(mGBuffer.mGBuffer[i].Get(), &srvDesc, cpuSrvHandle);
+		cpuSrvHandle.Offset(1, mCbvSrvUavDescriptorSize);
+	}
+
+	D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+	rtvDesc.Format = mGBuffer.mFormat;
+	rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+	rtvDesc.Texture2D.MipSlice = 0;
+	rtvDesc.Texture2D.PlaneSlice = 0;
+
+	CD3DX12_CPU_DESCRIPTOR_HANDLE cpuRtvHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(mGBuffer.mRtvHeap->GetCPUDescriptorHandleForHeapStart());
+	for (int i = 0; i < 6; ++i)
+	{
+		mD3dDevice->CreateRenderTargetView(mGBuffer.mGBuffer[i].Get(), &rtvDesc, cpuRtvHandle);
+		cpuRtvHandle.Offset(1, mRtvDescriptorSize);
+	}
 }

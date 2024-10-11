@@ -65,6 +65,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     auto cmdList = Dx12Device::GetCommandList();
     auto cmdQueue = Dx12Device::GetCommandQueue();
 
+    //Dx12Device::InitGBuffer(600, 600);
+
 
     // Dont reset the allocator if its never been associated to a command list
     //cmdListAlloc->Reset();
@@ -94,15 +96,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     UINT vertexSize = sizeof(Vertex);
 
-    // TODO: Make this all part of loading the mesh, create the vertex buffer and the view all in one go
-    std::unique_ptr<Mesh> boxMesh = Mesh::LoadMeshFromObj("../../../Resources/Models/box.obj");
-    //auto boxMeshBuffer = Dx12Device::CreateBuffer(boxMesh.mVertexData, sizeof(Vertex) * boxMesh.mVertexCount);
-    // Need to create a vertex buffer view
     
-    /*D3D12_VERTEX_BUFFER_VIEW vbv = {};
-    vbv.BufferLocation = boxMeshBuffer->mResource->GetGPUVirtualAddress();
-    vbv.SizeInBytes = boxMesh.mVertexCount * sizeof(Vertex);
-    vbv.StrideInBytes = sizeof(Vertex);*/
+    std::unique_ptr<Mesh> boxMesh = Mesh::LoadMeshFromObj("../../../Resources/Models/box.obj");
 
     
     auto vertexShader = D3dUtils::Dxc3CompileShader(L"../../../Resources/Shaders/test.hlsl", nullptr, L"vsMain", L"vs_6_6");

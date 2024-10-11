@@ -10,6 +10,7 @@
 #include "Buffer.h"
 #include "Texture.h"
 #include "DDSTextureLoader.h"
+#include "GBuffer.h"
 
 //#pragma comment(lib, "d3dcompiler.lib")
 #pragma comment(lib, "dxcompiler.lib")
@@ -65,11 +66,18 @@ public:
 
 	static const std::array<ID3D12DescriptorHeap*, 3> GetDescriptorHeaps();
 
+	
+
 private:
 	Dx12Device();
 	void ResizeSwapchain(int swapchainWidth, int swapchainHeight);
 	void FlushCommandQueue();
 	void PresentSwapchain();
+	void InitGBuffer();
+	void ResizeGBuffer(UINT width, UINT height);
+	void BuildGBufferResources();
+	void BuildGBufferDescriptors();
+
 
 	static const int mSwapChainBufferCount = 3;
 
@@ -107,5 +115,7 @@ private:
 
 	UINT64 mCurrentFenceVal = 0;
 
+	// Self contained GBuffer including heaps, resources, and descriptors
+	GBuffer mGBuffer;
 };
 
