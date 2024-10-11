@@ -3,15 +3,15 @@
 
 #include "framework.h"
 #include "D3D12Framework.h"
-#include "Dx12Device.h"
-#include "D3D12Common.h"
-#include "GraphicsPass.h"
-#include "RenderObject.h"
-#include "Mesh.h"
-#include "Utils.h"
-#include "Vertex.h"
-#include "Texture.h"
-#include "ConstantBufferStructs.h"
+#include "Renderer/Dx12Device.h"
+#include "Renderer/D3D12Common.h"
+#include "Renderer/GraphicsPass.h"
+#include "Renderer/RenderObject.h"
+#include "Renderer/Mesh.h"
+#include "Renderer/Utils.h"
+#include "Renderer/Vertex.h"
+#include "Renderer/Texture.h"
+#include "Renderer/ConstantBufferStructs.h"
 
 extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 614; }
 extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = u8".\\D3D12\\"; }
@@ -65,11 +65,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     auto cmdList = Dx12Device::GetCommandList();
     auto cmdQueue = Dx12Device::GetCommandQueue();
 
-    //Dx12Device::InitGBuffer(600, 600);
-
-
-    // Dont reset the allocator if its never been associated to a command list
-    //cmdListAlloc->Reset();
     hr = cmdList->Reset(cmdListAlloc.Get(), nullptr);
     if (FAILED(hr))
     {
