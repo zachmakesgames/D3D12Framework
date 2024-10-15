@@ -186,6 +186,11 @@ void D3D12App::Update()
 
 void D3D12App::Render()
 {
+    // This waits for the current frame allocator to finish executing GPU side if it
+    // hasn't already. For efficiency it only creates the wait event if the current
+    // fence value is below the current frame fence value
+    Dx12Device::FlushQueue();
+
     auto cmdListAlloc = Dx12Device::GetCurrentFrameAllocator();
     auto cmdList = Dx12Device::GetCommandList();
     auto cmdQueue = Dx12Device::GetCommandQueue();
@@ -203,7 +208,6 @@ void D3D12App::Render()
     cmdQueue->ExecuteCommandLists(_countof(lists), lists);
 
     Dx12Device::Present();
-    Dx12Device::FlushQueue();
     ++mFrameCount;
 }
 

@@ -118,6 +118,7 @@ private:
 	UINT mCbvSrvUavDescriptorSize;
 
 	UINT64 mCurrentFenceVal = 0;
+	UINT64 mFenceValues[mSwapChainBufferCount];
 
 	UINT mSwapchainWidth;
 	UINT mSwapchainHeight;

@@ -114,6 +114,9 @@ Dx12Device::Dx12Device()
 	cbvSrvUavHeapDesc.NodeMask = 0;
 
 	ThrowIfFailed(mD3dDevice->CreateDescriptorHeap(&cbvSrvUavHeapDesc, IID_PPV_ARGS(mCbvSrvUavHeap.GetAddressOf())));
+
+	// Set all the fence values to 0
+	memset(mFenceValues, 0x00, sizeof(UINT64)* mSwapChainBufferCount);
 }
 
 void Dx12Device::ResizeSwapchain(int swapchainWidth, int swapchainHeight)
@@ -206,35 +209,42 @@ void Dx12Device::ResizeSwapchain(int swapchainWidth, int swapchainHeight)
 
 void Dx12Device::FlushCommandQueue()
 {
-	++mCurrentFenceVal;
-
-	ThrowIfFailed(mCommandQueue->Signal(mFence.Get(), mCurrentFenceVal));
-
-	if (mFence->GetCompletedValue() < mCurrentFenceVal)
+	if (mFence->GetCompletedValue() < mFenceValues[mCurrentBackBuffer])
 	{
-		//HANDLE waitHandle = CreateEventEx(nullptr, NULL, CREATE_EVENT_INITIAL_SET, EVENT_ALL_ACCESS);
 
-		// Using an event handle is causing unexpected behavior currently. The event shouldn't return
-		// until the fence value is >= mCurrentFenceVal, but it returns one value early which is NOT
-		// what we want. When specifying a NULL handle in SetEventOnCompletion the call will simply
-		// block until the fence value reaches the desired value.
-		ThrowIfFailed(mFence->SetEventOnCompletion(mCurrentFenceVal, NULL));
+		++mCurrentFenceVal;
 
-		//WaitForSingleObject(waitHandle, INFINITE);
-		//CloseHandle(waitHandle);
+		mFenceValues[mCurrentBackBuffer] = mCurrentFenceVal;
+
+		ThrowIfFailed(mCommandQueue->Signal(mFence.Get(), mCurrentFenceVal));
+
+		OutputDebugStringA("Last frame still running, waiting for complete\r\n");
+		// Need to create this without the initial set flag, other the even is already signalled
+		// LOL
+		HANDLE waitHandle = CreateEventEx(nullptr, NULL, false, EVENT_ALL_ACCESS);
+
+		ThrowIfFailed(mFence->SetEventOnCompletion(mCurrentFenceVal, waitHandle));
+
+		WaitForSingleObject(waitHandle, INFINITE);
+		CloseHandle(waitHandle);
 	}
 }
 
 void Dx12Device::PresentSwapchain()
 {
 	ThrowIfFailed(mSwapChain->Present(0, 0));
+	++mCurrentFenceVal;
+
+	mFenceValues[mCurrentBackBuffer] = mCurrentFenceVal;
+	mCommandQueue->Signal(mFence.Get(), mCurrentFenceVal);
+
 	mCurrentBackBuffer = (mCurrentBackBuffer + 1) % mSwapChainBufferCount;
 
 	// Advance the fence for the current frame resource when implemented
 	// for now just advance the global fence
 
-	++mCurrentFenceVal;
-	mCommandQueue->Signal(mFence.Get(), mCurrentFenceVal);
+	//++mCurrentFenceVal;
+	//mCommandQueue->Signal(mFence.Get(), mCurrentFenceVal);
 
 }
 
