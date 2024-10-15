@@ -48,6 +48,8 @@ public:
 	inline static const DXGI_FORMAT GetDepthStencilFormat() { return mDepthStencilFormat; }
 	inline static const int GetSwapchainBufferCount() { return mSwapChainBufferCount; }
 
+	inline static const UINT FrameNumToBufferNum(UINT frameNum) { return frameNum % mSwapChainBufferCount; }
+
 	static std::unique_ptr<Buffer> CreateBuffer(const void* data, UINT64 bufferSize);
 	static std::unique_ptr<FrameBuffer> CreateFrameBuffer(const void* data, UINT64 bufferSize);
 
@@ -67,6 +69,8 @@ public:
 	static const std::array<ID3D12DescriptorHeap*, 3> GetDescriptorHeaps();
 
 	static GBuffer* GetGBuffer();
+
+	static D3D12_RECT GetViewportSize();
 	
 
 private:
@@ -89,8 +93,7 @@ private:
 
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue> mCommandQueue;
 
-	/// TODO: Change this
-	//Microsoft::WRL::ComPtr<ID3D12CommandAllocator> mDirectCmdListAlloc[mSwapChainBufferCount];
+	/// TODO: This may not be the best way to handle this, but it works for now
 	std::array< Microsoft::WRL::ComPtr<ID3D12CommandAllocator>, mSwapChainBufferCount> mDirectCmdListAlloc;
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> mCommandList;
 
@@ -115,6 +118,9 @@ private:
 	UINT mCbvSrvUavDescriptorSize;
 
 	UINT64 mCurrentFenceVal = 0;
+
+	UINT mSwapchainWidth;
+	UINT mSwapchainHeight;
 
 	// Self contained GBuffer including heaps, resources, and descriptors
 	GBuffer mGBuffer;

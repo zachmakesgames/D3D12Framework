@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="..\D3D12Framework\packages\Microsoft.Direct3D.D3D12.1.614.1\build\native\Microsoft.Direct3D.D3D12.props" Condition="Exists('..\D3D12Framework\packages\Microsoft.Direct3D.D3D12.1.614.1\build\native\Microsoft.Direct3D.D3D12.props')" />
   <ItemGroup Label="ProjectConfigurations">
@@ -20,6 +20,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Renderer\AppConstants.h" />
+    <ClInclude Include="D3D12App.h" />
+    <ClInclude Include="ForwardPass.h" />
     <ClInclude Include="Renderer\Buffer.h" />
     <ClInclude Include="Renderer\ConstantBufferStructs.h" />
     <ClInclude Include="Renderer\D3D12Common.h" />
@@ -34,8 +37,11 @@
     <ClInclude Include="Renderer\Texture.h" />
     <ClInclude Include="Renderer\Utils.h" />
     <ClInclude Include="Renderer\Vertex.h" />
+    <ClInclude Include="Renderer\ResourceGroup.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="D3D12App.cpp" />
+    <ClCompile Include="ForwardPass.cpp" />
     <ClCompile Include="Renderer\Buffer.cpp" />
     <ClCompile Include="Renderer\D3D12Common.cpp" />
     <ClCompile Include="Renderer\DDSTextureLoader.cpp" />

@@ -250,6 +250,9 @@ void Dx12Device::InitSwapchain(HWND window, int swapchainWidth, int swapchainHei
 {
 	if (sDevice != nullptr)
 	{
+		sDevice->mSwapchainWidth = swapchainWidth;
+		sDevice->mSwapchainHeight = swapchainHeight;
+
 		// Build the swap chain object
 		sDevice->mSwapChain.Reset();
 
@@ -279,6 +282,7 @@ void Dx12Device::InitSwapchain(HWND window, int swapchainWidth, int swapchainHei
 		// Create back buffer and depth buffer resources
 		sDevice->ResizeSwapchain(swapchainWidth, swapchainHeight);
 
+		// Handle the GBuffer resources while we're at it
 		sDevice->InitGBuffer();
 		sDevice->ResizeGBuffer(swapchainWidth, swapchainHeight);
 	}
@@ -288,7 +292,7 @@ void Dx12Device::DestroySwapchain()
 {
 	if (sDevice != nullptr)
 	{
-
+		// ???????
 	}
 }
 
@@ -360,8 +364,6 @@ Microsoft::WRL::ComPtr<ID3D12CommandAllocator> Dx12Device::GetCurrentFrameAlloca
 {
 	if (sDevice != nullptr)
 	{
-		// TODO: Get the actual command list allocator from the rame resource
-		// This is a very temporary method, need to actually organize these
 		return sDevice->mDirectCmdListAlloc[sDevice->mCurrentBackBuffer];
 	}
 	else
@@ -413,7 +415,6 @@ std::unique_ptr<Buffer> Dx12Device::CreateBuffer(const void* data, UINT64 buffer
 {
 
 	auto newBuffer = std::make_unique<Buffer>();
-	//Buffer newBuffer;
 
 	CD3DX12_HEAP_PROPERTIES heapProperties(D3D12_HEAP_TYPE_DEFAULT);
 	CD3DX12_HEAP_PROPERTIES heapPropertiesUpload(D3D12_HEAP_TYPE_UPLOAD);
@@ -454,6 +455,8 @@ std::unique_ptr<Buffer> Dx12Device::CreateBuffer(const void* data, UINT64 buffer
 		D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ);
 
 	sDevice->mCommandList->ResourceBarrier(1, &genericReadBarrier);
+
+	ThrowIfFailed(newBuffer->mUploadBuffer->Map(0, nullptr, reinterpret_cast<void**>(&(newBuffer->mMappedData))));
 
 	return newBuffer;
 }
@@ -719,5 +722,15 @@ GBuffer* Dx12Device::GetGBuffer()
 	if (sDevice != nullptr)
 	{
 		return &sDevice->mGBuffer;
+	}
+}
+
+D3D12_RECT Dx12Device::GetViewportSize()
+{
+	if (sDevice != nullptr)
+	{
+		D3D12_RECT rect = { 0, 0, sDevice->mSwapchainWidth, sDevice->mSwapchainHeight };
+
+		return rect;
 	}
 }

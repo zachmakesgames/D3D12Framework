@@ -2,6 +2,8 @@
 
 #include "D3D12Common.h"
 #include "RenderObject.h"
+#include "ResourceGroup.h"
+#include "AppConstants.h"
 
 class GraphicsPass
 {
@@ -11,16 +13,23 @@ public:
 	std::string mPassName = "";
 
 	std::vector<RenderObject*> mRenderObjectRefs;
+	ResourceGroup* mResourceGroup;
+	AppConstants* mConstants;
 
-	virtual void PreRender() {};
-	virtual void Render() {};
-	virtual void PostRender() {};
+	inline GraphicsPass(ResourceGroup* resourceGroup, AppConstants* constants) 
+		: mResourceGroup(resourceGroup), mConstants(constants)
+	{}
+
+	virtual void PreRender(UINT frameNumber) {};
+	virtual void Render(UINT frameNumber) {};
+	virtual void PostRender(UINT frameNumber) {};
 
 	inline GraphicsPass(std::string passName) : mPassName(passName) {};
 
 	inline void RegisterRenderObject(RenderObject* objRef)
 	{
-		if (std::find(mRenderObjectRefs.begin(), mRenderObjectRefs.end(), objRef) != mRenderObjectRefs.end())
+		auto ref = std::find(mRenderObjectRefs.begin(), mRenderObjectRefs.end(), objRef);
+		if (ref == mRenderObjectRefs.end())
 		{
 			mRenderObjectRefs.push_back(objRef);
 		}
@@ -79,7 +88,7 @@ public:
 		}
 	}
 
-	inline std::string Walk()
+	inline std::string Walk(UINT frameNum)
 	{
 		std::string graph_str = "Pass graph:";
 		if (mFirstPass == nullptr)
@@ -90,9 +99,9 @@ public:
 		{
 			GraphicsPass* currentPass = mFirstPass;
 			graph_str += " " + currentPass->mPassName;
-			currentPass->PreRender();
-			currentPass->Render();
-			currentPass->PostRender();
+			currentPass->PreRender(frameNum);
+			currentPass->Render(frameNum);
+			currentPass->PostRender(frameNum);
 			
 			while (currentPass->mNextPass != nullptr)
 			{
@@ -103,6 +112,4 @@ public:
 
 		return graph_str;
 	}
-
-
 };

@@ -7,6 +7,16 @@ class Buffer
 public:
 	Microsoft::WRL::ComPtr<ID3D12Resource> mResource;
 	Microsoft::WRL::ComPtr<ID3D12Resource> mUploadBuffer;
+	BYTE* mMappedData = nullptr;
+
+	inline void UpdateBuffer(int offset, int dataSize, void* data)
+	{
+		if (mMappedData != nullptr)
+		{
+			memcpy(mMappedData + offset, data, dataSize);
+		}
+	}
+
 };
 
 class FrameBuffer
