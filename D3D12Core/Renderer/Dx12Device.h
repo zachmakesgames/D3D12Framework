@@ -117,6 +117,11 @@ private:
 	UINT mDsvDescriptorSize;
 	UINT mCbvSrvUavDescriptorSize;
 
+	// mCurrentFenceVal stores the global fence value, mFenceValues stores
+	// the value of the global fence per frame at the time the frame was
+	// presented. This way each frame only has to wait if the current fence
+	// value reported by mFence->GetCompletedValue() is less than the frames
+	// fence value
 	UINT64 mCurrentFenceVal = 0;
 	UINT64 mFenceValues[mSwapChainBufferCount];
 
