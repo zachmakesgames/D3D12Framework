@@ -69,6 +69,9 @@
     <ClInclude Include="Renderer\AppConstants.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="GBufferPass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Renderer\Buffer.cpp">
@@ -93,6 +96,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ForwardPass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GBufferPass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

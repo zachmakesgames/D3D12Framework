@@ -107,6 +107,9 @@ public:
 			{
 				currentPass = currentPass->mNextPass;
 				graph_str += "->" + currentPass->mPassName;
+				currentPass->PreRender(frameNum);
+				currentPass->Render(frameNum);
+				currentPass->PostRender(frameNum);
 			}
 		}
 

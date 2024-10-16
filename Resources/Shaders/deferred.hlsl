@@ -5,7 +5,8 @@ struct VertexIn{
 };
 
 struct VertexOut{
-    float4 Pos      : SV_POSITION;
+    float4 PosH      : SV_POSITION;
+    float3 PosL     : POSITION0;
     float3 Norm     : NORMAL;
     float2 Tex      : TEXCOORD;
 };
@@ -14,12 +15,22 @@ cbuffer cbWorld : register(b0)
 {
     float4x4 viewMat;
     float4x4 projMat;
-}
+};
 
 cbuffer cbObject : register(b1)
 {
     float4x4 worldTransform;
-}
+};
+
+struct PixelOut
+{
+    float4 Color : SV_TARGET0;
+    float4 Normal : SV_TARGET1;
+    float4 Position : SV_TARGET2;
+    float4 ShadowPosition : SV_TARGET3;
+    float4 Material1 : SV_TARGET4;
+    float4 Material2 : SV_TARGET5;
+};
 
 SamplerState gsamPointWrap        : register(s0);
 SamplerState gsamPointClamp       : register(s1);
@@ -41,16 +52,26 @@ VertexOut vsMain(VertexIn vIn)
 
     float4 newVert = mul(float4(vIn.Pos, 1.f), MVP);
 
-    vOut.Pos = newVert;
+
+
+    float4 posW = mul(float4(vIn.Pos, 1.0f), worldTransform);
+    vOut.PosL = posW.xyz;
+
+    vOut.Norm = mul(vIn.Norm, (float3x3) worldTransform);
+
+    vOut.PosH = newVert;
+
     vOut.Tex = vIn.Tex;
 
     return vOut;
 }
 
-float4 psMain(VertexOut pIn) : SV_TARGET
+PixelOut psMain(VertexOut pIn)
 {
-    float4 textureSample = gTexture.Sample(gsamPointWrap, pIn.Tex);
+    PixelOut pOut = (PixelOut)0.0f;
+    pOut.Color = gTexture.Sample(gsamPointWrap, pIn.Tex);
+    pOut.Normal.xyz = normalize(pIn.Norm);
+    pOut.Position.xyz = pIn.PosL;
 
-    return textureSample;
-    //return float4(1, 1, 1, 1);
+    return pOut;
 }

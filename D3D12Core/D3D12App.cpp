@@ -29,7 +29,9 @@ void D3D12App::Init()
 
     
     mResourceGroup.mObjects["box"] = std::make_unique<RenderObject>("box");
+    mResourceGroup.mObjects["box"]->mTextureRef = "TestPattern";
     mResourceGroup.mObjects["box2"] = std::make_unique<RenderObject>("box");
+    mResourceGroup.mObjects["box2"]->mTextureRef = "TestPattern";
 
     // Need to keep a record of the passes, otherwise they get destructed
     mPasses["mainPass"] = new ForwardPass(&mResourceGroup, &mConstants);
@@ -38,7 +40,14 @@ void D3D12App::Init()
     mPasses["mainPass"]->RegisterRenderObject(mResourceGroup.mObjects["box"].get());
     mPasses["mainPass"]->RegisterRenderObject(mResourceGroup.mObjects["box2"].get());
 
+    mPasses["deferredPass"] = new GBufferPass(&mResourceGroup, &mConstants);
+    mPasses["deferredPass"]->mPassName = "Deferred pass";
+
+    mPasses["deferredPass"]->RegisterRenderObject(mResourceGroup.mObjects["box"].get());
+    mPasses["deferredPass"]->RegisterRenderObject(mResourceGroup.mObjects["box2"].get());
+
     mPassGraph.AddPass(mPasses["mainPass"]);
+    mPassGraph.AddPass(mPasses["deferredPass"]);
 
     DirectX::XMMATRIX ident = DirectX::XMMatrixIdentity();
     DirectX::XMFLOAT4X4 identF;
@@ -82,7 +91,7 @@ void D3D12App::Init()
 
     ID3D12CommandList* lists[] = { cmdList.Get() };
     cmdQueue->ExecuteCommandLists(_countof(lists), lists);
-    Dx12Device::FlushQueue();
+    Dx12Device::FlushQueue(true);
 }
 
 void D3D12App::CreateRootSigs()
@@ -123,10 +132,15 @@ void D3D12App::CreateShaders()
 {
     mResourceGroup.mShaders["simpleVs"] = D3dUtils::Dxc3CompileShader(L"../../../Resources/Shaders/test.hlsl", nullptr, L"vsMain", L"vs_6_6");
     mResourceGroup.mShaders["simplePs"] = D3dUtils::Dxc3CompileShader(L"../../../Resources/Shaders/test.hlsl", nullptr, L"psMain", L"ps_6_6");
+
+    mResourceGroup.mShaders["deferredVs"] = D3dUtils::Dxc3CompileShader(L"../../../Resources/Shaders/deferred.hlsl", nullptr, L"vsMain", L"vs_6_6");
+    mResourceGroup.mShaders["deferredPs"] = D3dUtils::Dxc3CompileShader(L"../../../Resources/Shaders/deferred.hlsl", nullptr, L"psMain", L"ps_6_6");
 }
 
 void D3D12App::CreatePSOs()
 {
+    GBuffer* gBuffer = Dx12Device::GetGBuffer();
+
     std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayout = {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
         { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -153,6 +167,22 @@ void D3D12App::CreatePSOs()
     psoDesc.DSVFormat = Dx12Device::GetDepthStencilFormat();
 
     mResourceGroup.mPSOs["simplePSO"] = Dx12Device::CreatePSO(&psoDesc);
+
+    psoDesc.VS = { reinterpret_cast<BYTE*>(mResourceGroup.mShaders["deferredVs"]->GetBufferPointer()), mResourceGroup.mShaders["deferredVs"]->GetBufferSize() };
+    psoDesc.PS = { reinterpret_cast<BYTE*>(mResourceGroup.mShaders["deferredPs"]->GetBufferPointer()), mResourceGroup.mShaders["deferredPs"]->GetBufferSize() };
+
+
+    DXGI_FORMAT gBufferFormat = gBuffer->GetFormat();
+    psoDesc.NumRenderTargets = 6;
+    psoDesc.RTVFormats[0] = gBufferFormat;
+    psoDesc.RTVFormats[1] = gBufferFormat;
+    psoDesc.RTVFormats[2] = gBufferFormat;
+    psoDesc.RTVFormats[3] = gBufferFormat;
+    psoDesc.RTVFormats[4] = gBufferFormat;
+    psoDesc.RTVFormats[5] = gBufferFormat;
+
+    mResourceGroup.mPSOs["deferredPSO"] = Dx12Device::CreatePSO(&psoDesc);
+
 }
 
 void D3D12App::Update()

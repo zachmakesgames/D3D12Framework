@@ -58,11 +58,7 @@ void ForwardPass::Render(UINT frameNumber)
     {
         cmdList->SetGraphicsRootConstantBufferView(1, ref->GetBuffer(bufferNum)->mUploadBuffer->GetGPUVirtualAddress());
 
-        // TODO: Get the texture ref from the object
-        // Currently just rendering a test pattern because its the only texture
-        // I have.
-        Texture* textureRef = &mResourceGroup->mTextures["TestPattern"];
-        auto SrvGpuHandle = mResourceGroup->mTextures["TestPattern"].mSrvHandle.mGpuHandle;
+        auto SrvGpuHandle = mResourceGroup->mTextures[ref->mTextureRef].mSrvHandle.mGpuHandle;
         
         cmdList->SetGraphicsRootDescriptorTable(2, SrvGpuHandle);
 

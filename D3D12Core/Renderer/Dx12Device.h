@@ -30,7 +30,7 @@ public:
 	static void Create();
 	static void InitSwapchain(HWND window, int swapchainWidth, int swapchainHeight, bool windowed = true);
 	static void DestroySwapchain();
-	static void FlushQueue();
+	static void FlushQueue(bool hardFlush = false);
 	static ID3D12Resource* GetCurrentBackBuffer();
 	static Microsoft::WRL::ComPtr<ID3D12RootSignature> CreateRootSignature(CD3DX12_ROOT_SIGNATURE_DESC* desc);
 	static Microsoft::WRL::ComPtr<ID3D12PipelineState> CreatePSO(D3D12_GRAPHICS_PIPELINE_STATE_DESC* desc);
@@ -77,6 +77,7 @@ private:
 	Dx12Device();
 	void ResizeSwapchain(int swapchainWidth, int swapchainHeight);
 	void FlushCommandQueue();
+	void HardFlushCommandQueue();
 	void PresentSwapchain();
 	void InitGBuffer();
 	void ResizeGBuffer(UINT width, UINT height);

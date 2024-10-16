@@ -4,19 +4,19 @@
 class GBuffer
 {
 public:
-	inline CD3DX12_CPU_DESCRIPTOR_HANDLE GetCpuSrvHandle()
+	inline CD3DX12_CPU_DESCRIPTOR_HANDLE GetCpuSrvHandle(UINT offset)
 	{
-		return mhCpuSrv;
+		return CD3DX12_CPU_DESCRIPTOR_HANDLE(mSrvHeap->GetCPUDescriptorHandleForHeapStart(), offset, mSrvDescriptorSize);
 	}
 
-	inline CD3DX12_GPU_DESCRIPTOR_HANDLE GetGpuSrvHandle()
+	inline CD3DX12_GPU_DESCRIPTOR_HANDLE GetGpuSrvHandle(UINT offset)
 	{
-		return mhGpuSrv;
+		return CD3DX12_GPU_DESCRIPTOR_HANDLE(mSrvHeap->GetGPUDescriptorHandleForHeapStart(), offset, mSrvDescriptorSize);
 	}
 
-	inline CD3DX12_CPU_DESCRIPTOR_HANDLE GetCpuRtvHandle()
+	inline CD3DX12_CPU_DESCRIPTOR_HANDLE GetCpuRtvHandle(UINT offset)
 	{
-		return mhCpuRtv;
+		return CD3DX12_CPU_DESCRIPTOR_HANDLE(mRtvHeap->GetCPUDescriptorHandleForHeapStart(), offset, mRtvDescriptorSize);
 	}
 
 	inline ID3D12Resource* GetResource(int resourceIndex)
@@ -31,6 +31,11 @@ public:
 		}
 	}
 
+	inline DXGI_FORMAT GetFormat()
+	{
+		return mFormat;
+	}
+
 
 private:
 	UINT mWidth = 0;
@@ -41,6 +46,10 @@ private:
 	CD3DX12_CPU_DESCRIPTOR_HANDLE mhCpuSrv;
 	CD3DX12_GPU_DESCRIPTOR_HANDLE mhGpuSrv;
 	CD3DX12_CPU_DESCRIPTOR_HANDLE mhCpuRtv;
+
+	UINT mRtvDescriptorSize;
+	UINT mDsvDescriptorSize;
+	UINT mSrvDescriptorSize;
 
 	// Probably dont actually need this handle
 	CD3DX12_CPU_DESCRIPTOR_HANDLE mhCpuDsv;

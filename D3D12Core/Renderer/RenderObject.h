@@ -30,6 +30,7 @@ public:
 
 	RenderItemConstants mConstants;
 	std::string mMeshRef;
+	std::string mTextureRef;
 
 private:
 	std::unique_ptr<FrameBuffer> mConstantBuffers;

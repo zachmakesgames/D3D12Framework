@@ -218,7 +218,32 @@ void Dx12Device::FlushCommandQueue()
 
 		ThrowIfFailed(mCommandQueue->Signal(mFence.Get(), mCurrentFenceVal));
 
-		OutputDebugStringA("Last frame still running, waiting for complete\r\n");
+		// Need to create this without the initial set flag, other the even is already signalled
+		// LOL
+		HANDLE waitHandle = CreateEventEx(nullptr, NULL, false, EVENT_ALL_ACCESS);
+
+		ThrowIfFailed(mFence->SetEventOnCompletion(mCurrentFenceVal, waitHandle));
+
+		WaitForSingleObject(waitHandle, INFINITE);
+		CloseHandle(waitHandle);
+	}
+}
+
+void Dx12Device::HardFlushCommandQueue()
+{
+	// We need to incrememnt the fence value and signal it
+	// before checking it if we want to hard flush the queue.
+	// This is necessary to allow the queue to flush before we
+	// have rendered any frames but after we have put work on the
+	// queue to create resources
+	++mCurrentFenceVal;
+
+	mFenceValues[mCurrentBackBuffer] = mCurrentFenceVal;
+
+	ThrowIfFailed(mCommandQueue->Signal(mFence.Get(), mCurrentFenceVal));
+
+	if (mFence->GetCompletedValue() < mFenceValues[mCurrentBackBuffer])
+	{
 		// Need to create this without the initial set flag, other the even is already signalled
 		// LOL
 		HANDLE waitHandle = CreateEventEx(nullptr, NULL, false, EVENT_ALL_ACCESS);
@@ -306,11 +331,18 @@ void Dx12Device::DestroySwapchain()
 	}
 }
 
-void Dx12Device::FlushQueue()
+void Dx12Device::FlushQueue(bool hardFlush)
 {
 	if (sDevice != nullptr)
 	{
-		sDevice->FlushCommandQueue();
+		if (hardFlush)
+		{
+			sDevice->HardFlushCommandQueue();
+		}
+		else
+		{
+			sDevice->FlushCommandQueue();
+		}
 	}
 }
 
@@ -637,6 +669,10 @@ void Dx12Device::InitGBuffer()
 	cbvSrvUavHeapDesc.NodeMask = 0;
 
 	ThrowIfFailed(mD3dDevice->CreateDescriptorHeap(&cbvSrvUavHeapDesc, IID_PPV_ARGS(mGBuffer.mSrvHeap.GetAddressOf())));
+
+	mGBuffer.mDsvDescriptorSize = mDsvDescriptorSize;
+	mGBuffer.mRtvDescriptorSize = mRtvDescriptorSize;
+	mGBuffer.mSrvDescriptorSize = mCbvSrvUavDescriptorSize;
 }
 
 void Dx12Device::ResizeGBuffer(UINT width, UINT height)

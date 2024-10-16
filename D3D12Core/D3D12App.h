@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include "Renderer/ResourceGroup.h"
 #include "ForwardPass.h"
+#include "GBufferPass.h"
 #include "Renderer/AppConstants.h"
 
 class __declspec(dllexport) D3D12App
