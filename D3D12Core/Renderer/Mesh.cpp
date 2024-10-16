@@ -295,6 +295,25 @@ std::unique_ptr<Mesh> Mesh::LoadMeshFromObj(std::string file_name)
 	return std::move(returnMesh);
 }
 
+std::unique_ptr<Mesh> Mesh::CreateMesh(Vertex* vertexData, UINT vertexCount)
+{
+	std::unique_ptr<Mesh> returnMesh = std::make_unique<Mesh>();
+
+	// Do a deep copy in case the mesh ever needs to be manipulated in flight
+	returnMesh->mVertexData = new Vertex[sizeof(Vertex) * vertexCount];
+	memcpy(returnMesh->mVertexData, vertexData, sizeof(Vertex) * vertexCount);
+	returnMesh->mVertexCount = vertexCount;
+
+	returnMesh->mVertexBuffer = Dx12Device::CreateBuffer(returnMesh->mVertexData, sizeof(Vertex) * returnMesh->mVertexCount);
+
+	returnMesh->mVertexBufferView = {};
+	returnMesh->mVertexBufferView.BufferLocation = returnMesh->mVertexBuffer->mResource->GetGPUVirtualAddress();
+	returnMesh->mVertexBufferView.SizeInBytes = returnMesh->mVertexCount * sizeof(Vertex);
+	returnMesh->mVertexBufferView.StrideInBytes = sizeof(Vertex);
+
+	return std::move(returnMesh);
+}
+
 Mesh::~Mesh()
 {
 	if (mVertexData != nullptr)

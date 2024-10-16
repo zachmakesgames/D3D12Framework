@@ -94,6 +94,7 @@ void D3D12App::Init()
     Dx12Device::FlushQueue(true);
 }
 
+// TODO: Leave this for only very common root signatures, allow GraphicsPasses to create their own resources
 void D3D12App::CreateRootSigs()
 {
     CD3DX12_DESCRIPTOR_RANGE textureTable0;
@@ -111,13 +112,44 @@ void D3D12App::CreateRootSigs()
         D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
     mResourceGroup.mRootSignatures["mainRootSig"] = Dx12Device::CreateRootSignature(&mainRootSig);
+
+
+    CD3DX12_DESCRIPTOR_RANGE gBufferSrvTable;
+    gBufferSrvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 6, 0, 0);
+
+    CD3DX12_ROOT_PARAMETER lightingRootParam[1];
+    lightingRootParam[0].InitAsDescriptorTable(1, &gBufferSrvTable, D3D12_SHADER_VISIBILITY_PIXEL);
+
+    CD3DX12_ROOT_SIGNATURE_DESC lightingRootSig(1, lightingRootParam,
+        (UINT)samplers.size(), samplers.data(),
+        D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+
+    mResourceGroup.mRootSignatures["lightingRootSig"] = Dx12Device::CreateRootSignature(&lightingRootSig);
 }
 
 void D3D12App::CreateGeometry()
 {
     mResourceGroup.mGeometry["box"] = Mesh::LoadMeshFromObj("../../../Resources/Models/box.obj");
 
-    mResourceGroup.mObjects["boxObj"] = std::make_unique<RenderObject>("box");
+    // whoops, this is duplicated from the init function
+    //mResourceGroup.mObjects["boxObj"] = std::make_unique<RenderObject>("box");
+
+    float x, y, w, h;
+    x = -1;
+    y = -1;
+    w = 2;
+    h = 2;
+
+    Vertex triangle[] =
+    {
+        { {x, y, 0.01}, {0, 0, 0}, {0, 0} },
+        { {x + w, y, 0.01}, {0, 0, 0}, {0, 0} },
+        { {x + w, y + h, 0.01}, {0, 0, 0}, {0, 0} },
+    };
+
+    mResourceGroup.mGeometry["triangle"] = Mesh::CreateMesh(triangle, 3);
+
+
 
     // TODO: Why is this here? Where does this go? How does a computer even work?!
     mResourceGroup.mTextures["TestPattern"] = Texture("TestPattern", L"../../../Resources/Textures/TestPattern.dds");
@@ -128,6 +160,7 @@ void D3D12App::CreateGeometry()
     }
 }
 
+// TODO: Leave this for only very common shaders, allow GraphicsPasses to create their own resources
 void D3D12App::CreateShaders()
 {
     mResourceGroup.mShaders["simpleVs"] = D3dUtils::Dxc3CompileShader(L"../../../Resources/Shaders/test.hlsl", nullptr, L"vsMain", L"vs_6_6");
@@ -135,8 +168,13 @@ void D3D12App::CreateShaders()
 
     mResourceGroup.mShaders["deferredVs"] = D3dUtils::Dxc3CompileShader(L"../../../Resources/Shaders/deferred.hlsl", nullptr, L"vsMain", L"vs_6_6");
     mResourceGroup.mShaders["deferredPs"] = D3dUtils::Dxc3CompileShader(L"../../../Resources/Shaders/deferred.hlsl", nullptr, L"psMain", L"ps_6_6");
+
+    mResourceGroup.mShaders["deferredLightingVs"] = D3dUtils::Dxc3CompileShader(L"../../../Resources/Shaders/deferredlighting.hlsl", nullptr, L"vsMain", L"vs_6_6");
+    mResourceGroup.mShaders["deferredLightingPs"] = D3dUtils::Dxc3CompileShader(L"../../../Resources/Shaders/deferredlighting.hlsl", nullptr, L"psMain", L"ps_6_6");
 }
 
+
+// TODO: Leave this for only very common PSOs, allow GraphicsPasses to create their own resources
 void D3D12App::CreatePSOs()
 {
     GBuffer* gBuffer = Dx12Device::GetGBuffer();
@@ -168,6 +206,13 @@ void D3D12App::CreatePSOs()
 
     mResourceGroup.mPSOs["simplePSO"] = Dx12Device::CreatePSO(&psoDesc);
 
+    psoDesc.pRootSignature = mResourceGroup.mRootSignatures["lightingRootSig"].Get();
+    psoDesc.VS = { reinterpret_cast<BYTE*>(mResourceGroup.mShaders["deferredLightingVs"]->GetBufferPointer()), mResourceGroup.mShaders["deferredLightingVs"]->GetBufferSize() };
+    psoDesc.PS = { reinterpret_cast<BYTE*>(mResourceGroup.mShaders["deferredLightingPs"]->GetBufferPointer()), mResourceGroup.mShaders["deferredLightingPs"]->GetBufferSize() };
+
+    mResourceGroup.mPSOs["deferredLightingPSO"] = Dx12Device::CreatePSO(&psoDesc);
+
+    psoDesc.pRootSignature = mResourceGroup.mRootSignatures["mainRootSig"].Get();
     psoDesc.VS = { reinterpret_cast<BYTE*>(mResourceGroup.mShaders["deferredVs"]->GetBufferPointer()), mResourceGroup.mShaders["deferredVs"]->GetBufferSize() };
     psoDesc.PS = { reinterpret_cast<BYTE*>(mResourceGroup.mShaders["deferredPs"]->GetBufferPointer()), mResourceGroup.mShaders["deferredPs"]->GetBufferSize() };
 
@@ -182,6 +227,8 @@ void D3D12App::CreatePSOs()
     psoDesc.RTVFormats[5] = gBufferFormat;
 
     mResourceGroup.mPSOs["deferredPSO"] = Dx12Device::CreatePSO(&psoDesc);
+
+
 
 }
 

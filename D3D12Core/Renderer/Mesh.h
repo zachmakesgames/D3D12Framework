@@ -11,6 +11,7 @@ public:
 	{}
 
 	static std::unique_ptr<Mesh> LoadMeshFromObj(std::string file_name);
+	static std::unique_ptr<Mesh> CreateMesh(Vertex* vertexData, UINT vertexCount);
 	~Mesh();
 
 	Vertex* mVertexData = nullptr;
