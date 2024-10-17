@@ -22,6 +22,7 @@ public:
 	void Render();
 
 	void Run();
+	void Stop();
 
 	bool mShouldRun = false;
 
@@ -39,6 +40,7 @@ private:
 	UINT mFrameCount = 0;
 
 	bool mWindowed;
+	bool mRunning = false;
 
 	// A collection of resources used to render the scene. This includes
 	//     root signatures, meshes, shaders, textures, psos, and renderable objects

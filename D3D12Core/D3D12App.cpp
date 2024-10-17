@@ -282,6 +282,16 @@ void D3D12App::Render()
 
 void D3D12App::Run()
 {
-    // TODO: Put the render loop here so we can run everything from
-    // a separate thread
+    mRunning = true;
+
+    while (mRunning)
+    {
+        Update();
+        Render();
+    }
+}
+
+void D3D12App::Stop()
+{
+    mRunning = false;
 }
