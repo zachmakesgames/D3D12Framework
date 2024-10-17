@@ -49,7 +49,8 @@ void GBufferPass::PreRender(UINT frameNumber)
     cmdList->OMSetRenderTargets(6, rtvHandles, true, &dsv);
 
 
-    float color[] = { 0, 0, 0, 0 };
+    //float color[] = { 0, 0, 0, 0 };
+    float* color = gBuffer->GetClearColor().data();
     cmdList->ClearRenderTargetView(rtvHandles[0], color, 1, &rect);
     cmdList->ClearRenderTargetView(rtvHandles[1], color, 1, &rect);
     cmdList->ClearRenderTargetView(rtvHandles[2], color, 1, &rect);

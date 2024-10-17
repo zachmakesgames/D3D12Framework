@@ -9,9 +9,9 @@ public:
 		return CD3DX12_CPU_DESCRIPTOR_HANDLE(mSrvHeap->GetCPUDescriptorHandleForHeapStart(), offset, mSrvDescriptorSize);
 	}
 
-	inline CD3DX12_GPU_DESCRIPTOR_HANDLE GetGpuSrvHandle(UINT offset)
+	inline D3D12_GPU_DESCRIPTOR_HANDLE GetGpuSrvHandle()
 	{
-		return CD3DX12_GPU_DESCRIPTOR_HANDLE(mSrvHeap->GetGPUDescriptorHandleForHeapStart(), offset, mSrvDescriptorSize);
+		return mSrvHeap->GetGPUDescriptorHandleForHeapStart();
 	}
 
 	inline CD3DX12_CPU_DESCRIPTOR_HANDLE GetCpuRtvHandle(UINT offset)
@@ -34,6 +34,16 @@ public:
 	inline DXGI_FORMAT GetFormat()
 	{
 		return mFormat;
+	}
+
+	inline ID3D12DescriptorHeap* GetSrvHeap()
+	{
+		return mSrvHeap.Get();
+	}
+
+	inline std::array<float, 4> GetClearColor()
+	{
+		return mClearColor;
 	}
 
 
@@ -61,6 +71,8 @@ private:
 
 	// Probably dont actually need this heap
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mDsvHeap = nullptr;
+
+	const std::array<float, 4> mClearColor = { 0.2, 0.2, 0.5, 1 };
 
 	friend class Dx12Device;
 };

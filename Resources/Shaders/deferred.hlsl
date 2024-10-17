@@ -58,6 +58,7 @@ VertexOut vsMain(VertexIn vIn)
     vOut.PosL = posW.xyz;
 
     vOut.Norm = mul(vIn.Norm, (float3x3) worldTransform);
+    //vOut.Norm = vIn.Norm;
 
     vOut.PosH = newVert;
 
@@ -72,6 +73,11 @@ PixelOut psMain(VertexOut pIn)
     pOut.Color = gTexture.Sample(gsamPointWrap, pIn.Tex);
     pOut.Normal.xyz = normalize(pIn.Norm);
     pOut.Position.xyz = pIn.PosL;
+    
+    // Using the x value in the first material texture to mask out
+    // the background from actual objects. Otherwise the clear color
+    // gets lit because we're doing a full screen render
+    pOut.Material1.x = 1;
 
     return pOut;
 }

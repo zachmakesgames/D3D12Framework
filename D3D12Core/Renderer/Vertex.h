@@ -19,3 +19,11 @@ struct SimpleVertex
 {
 	DirectX::XMFLOAT3 vert;
 };
+
+
+static Vertex sFullScreenTriangle[] =
+{
+	{ {-3, -1, 0.01}, {0, 0, 0}, {0, 0} },
+	{ {1, -1, 0.01}, {0, 0, 0}, {0, 0} },
+	{ {1, 3, 0.01}, {0, 0, 0}, {0, 0} },
+};

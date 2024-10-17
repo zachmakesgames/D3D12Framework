@@ -72,6 +72,9 @@
     <ClInclude Include="GBufferPass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="LightingPass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Renderer\Buffer.cpp">
@@ -99,6 +102,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="GBufferPass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LightingPass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

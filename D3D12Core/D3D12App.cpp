@@ -33,21 +33,29 @@ void D3D12App::Init()
     mResourceGroup.mObjects["box2"] = std::make_unique<RenderObject>("box");
     mResourceGroup.mObjects["box2"]->mTextureRef = "TestPattern";
 
-    // Need to keep a record of the passes, otherwise they get destructed
+    // A basic forward rendering pass
     mPasses["mainPass"] = new ForwardPass(&mResourceGroup, &mConstants);
     mPasses["mainPass"]->mPassName = "Forward pass";
 
     mPasses["mainPass"]->RegisterRenderObject(mResourceGroup.mObjects["box"].get());
     mPasses["mainPass"]->RegisterRenderObject(mResourceGroup.mObjects["box2"].get());
 
+
+    // The GBuffer pass for deferred lighting
     mPasses["deferredPass"] = new GBufferPass(&mResourceGroup, &mConstants);
     mPasses["deferredPass"]->mPassName = "Deferred pass";
 
     mPasses["deferredPass"]->RegisterRenderObject(mResourceGroup.mObjects["box"].get());
     mPasses["deferredPass"]->RegisterRenderObject(mResourceGroup.mObjects["box2"].get());
 
-    mPassGraph.AddPass(mPasses["mainPass"]);
-    mPassGraph.AddPass(mPasses["deferredPass"]);
+    // The lighting pass for deferred lighting
+    mPasses["deferredLightingPass"] = new LightingPass(&mResourceGroup, &mConstants);
+    mPasses["deferredLightingPass"]->mPassName = "Deferred lighting pass";
+
+    //mPassGraph.AddPass(mPasses["mainPass"]);          // This would enable forward rendering with no lighting
+    mPassGraph.AddPass(mPasses["deferredPass"]);        // These enable deferred rendering with lighting
+    mPassGraph.AddPass(mPasses["deferredLightingPass"]);
+
 
     DirectX::XMMATRIX ident = DirectX::XMMatrixIdentity();
     DirectX::XMFLOAT4X4 identF;
@@ -131,23 +139,7 @@ void D3D12App::CreateGeometry()
 {
     mResourceGroup.mGeometry["box"] = Mesh::LoadMeshFromObj("../../../Resources/Models/box.obj");
 
-    // whoops, this is duplicated from the init function
-    //mResourceGroup.mObjects["boxObj"] = std::make_unique<RenderObject>("box");
-
-    float x, y, w, h;
-    x = -1;
-    y = -1;
-    w = 2;
-    h = 2;
-
-    Vertex triangle[] =
-    {
-        { {x, y, 0.01}, {0, 0, 0}, {0, 0} },
-        { {x + w, y, 0.01}, {0, 0, 0}, {0, 0} },
-        { {x + w, y + h, 0.01}, {0, 0, 0}, {0, 0} },
-    };
-
-    mResourceGroup.mGeometry["triangle"] = Mesh::CreateMesh(triangle, 3);
+    mResourceGroup.mGeometry["triangle"] = Mesh::CreateMesh(sFullScreenTriangle, 3);
 
 
 

@@ -21,6 +21,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GBufferPass.h" />
+    <ClInclude Include="LightingPass.h" />
     <ClInclude Include="Renderer\AppConstants.h" />
     <ClInclude Include="D3D12App.h" />
     <ClInclude Include="ForwardPass.h" />
@@ -44,6 +45,7 @@
     <ClCompile Include="D3D12App.cpp" />
     <ClCompile Include="ForwardPass.cpp" />
     <ClCompile Include="GBufferPass.cpp" />
+    <ClCompile Include="LightingPass.cpp" />
     <ClCompile Include="Renderer\Buffer.cpp" />
     <ClCompile Include="Renderer\D3D12Common.cpp" />
     <ClCompile Include="Renderer\DDSTextureLoader.cpp" />

@@ -712,10 +712,10 @@ void Dx12Device::BuildGBufferResources()
 
 	D3D12_CLEAR_VALUE optClear;
 	optClear.Format = mGBuffer.mFormat;
-	optClear.Color[0] = 0.0f;
-	optClear.Color[1] = 0.0f;
-	optClear.Color[2] = 0.0f;
-	optClear.Color[3] = 0.0f;
+	optClear.Color[0] = mGBuffer.mClearColor[0];
+	optClear.Color[1] = mGBuffer.mClearColor[1];
+	optClear.Color[2] = mGBuffer.mClearColor[2];
+	optClear.Color[3] = mGBuffer.mClearColor[3];
 
 	CD3DX12_HEAP_PROPERTIES defaultHeap = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 	for (int i = 0; i < 6; ++i)
