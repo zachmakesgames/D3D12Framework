@@ -3,6 +3,9 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+#dont ignore .obj file in the Resources/Models folder
+!Resources/Models/*.obj
+
 # User-specific files
 *.rsuser
 *.suo
