@@ -10,6 +10,8 @@
 #include "GBufferPass.h"
 #include "LightingPass.h"
 #include "Renderer/AppConstants.h"
+#include <queue>
+#include <chrono>
 
 class __declspec(dllexport) D3D12App
 {
@@ -23,14 +25,15 @@ public:
 
 	void Run();
 	void Stop();
-
-	bool mShouldRun = false;
+	void Resize(UINT newWidth, UINT newHeight);
 
 private:
 	void CreateRootSigs();
 	void CreateGeometry();
 	void CreateShaders();
 	void CreatePSOs();
+
+	void PollInputs();
 
 	HWND mWindow;
 
@@ -54,5 +57,9 @@ private:
 	// Great for a simple demo, but ideally each object will handle their own state
 	float mObjectRotation = 0;
 
+	std::queue<DirectX::XMINT2> mResizeQueue;
+
+	std::chrono::time_point<std::chrono::high_resolution_clock> mFrameTimer = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double, std::milli> mFrameDuration;
 };
 

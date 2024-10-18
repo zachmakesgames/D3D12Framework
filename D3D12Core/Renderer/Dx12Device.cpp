@@ -123,8 +123,10 @@ void Dx12Device::ResizeSwapchain(int swapchainWidth, int swapchainHeight)
 {
 	if (mD3dDevice != nullptr && mSwapChain != nullptr && mDirectCmdListAlloc[mCurrentBackBuffer] != nullptr)
 	{
+		sDevice->mSwapchainWidth = swapchainWidth;
+		sDevice->mSwapchainHeight = swapchainHeight;
 
-		FlushCommandQueue();
+		HardFlushCommandQueue();
 
 		ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc[mCurrentBackBuffer].Get(), nullptr));
 
@@ -197,9 +199,9 @@ void Dx12Device::ResizeSwapchain(int swapchainWidth, int swapchainHeight)
 		ID3D12CommandList* commandLists[] = { mCommandList.Get() };
 		mCommandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
 
-		FlushCommandQueue();
 
-		// TODO: Resize the GBuffer here as well
+		ResizeGBuffer(swapchainWidth, swapchainHeight);
+		HardFlushCommandQueue();
 	}
 	else
 	{
@@ -314,12 +316,12 @@ void Dx12Device::InitSwapchain(HWND window, int swapchainWidth, int swapchainHei
 			sDevice->mSwapChain.GetAddressOf()
 		));
 
-		// Create back buffer and depth buffer resources
-		sDevice->ResizeSwapchain(swapchainWidth, swapchainHeight);
-
 		// Handle the GBuffer resources while we're at it
 		sDevice->InitGBuffer();
 		sDevice->ResizeGBuffer(swapchainWidth, swapchainHeight);
+		// Create back buffer and depth buffer resources
+		sDevice->ResizeSwapchain(swapchainWidth, swapchainHeight);
+
 	}
 }
 
@@ -778,5 +780,13 @@ D3D12_RECT Dx12Device::GetViewportSize()
 		D3D12_RECT rect = { 0, 0, sDevice->mSwapchainWidth, sDevice->mSwapchainHeight };
 
 		return rect;
+	}
+}
+
+void Dx12Device::Resize(int width, int height)
+{
+	if (sDevice != nullptr)
+	{
+		sDevice->ResizeSwapchain(width, height);
 	}
 }

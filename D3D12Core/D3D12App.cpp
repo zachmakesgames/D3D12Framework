@@ -30,7 +30,7 @@ void D3D12App::Init()
     
     mResourceGroup.mObjects["box"] = std::make_unique<RenderObject>("box");
     mResourceGroup.mObjects["box"]->mTextureRef = "TestPattern";
-    mResourceGroup.mObjects["box2"] = std::make_unique<RenderObject>("box");
+    mResourceGroup.mObjects["box2"] = std::make_unique<RenderObject>("d20");
     mResourceGroup.mObjects["box2"]->mTextureRef = "TestPattern";
 
     // A basic forward rendering pass
@@ -138,6 +138,7 @@ void D3D12App::CreateRootSigs()
 void D3D12App::CreateGeometry()
 {
     mResourceGroup.mGeometry["box"] = Mesh::LoadMeshFromObj("../../../Resources/Models/box.obj");
+    mResourceGroup.mGeometry["d20"] = Mesh::LoadMeshFromObj("../../../Resources/Models/D20.obj");
 
     mResourceGroup.mGeometry["triangle"] = Mesh::CreateMesh(sFullScreenTriangle, 3);
 
@@ -226,9 +227,16 @@ void D3D12App::CreatePSOs()
 
 void D3D12App::Update()
 {
+
+    auto lastTime = mFrameTimer;
+    mFrameTimer = std::chrono::high_resolution_clock::now();
+    mFrameDuration = mFrameTimer - lastTime;
+
+    float dt = mFrameDuration.count();
+
     UINT bufferNum = Dx12Device::FrameNumToBufferNum(mFrameCount);
 
-    mObjectRotation += 0.001;
+    mObjectRotation += 0.001 * dt;
 
     DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(0, 0, 10);
     DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationX(0.3 * DirectX::XM_PI);
@@ -250,6 +258,18 @@ void D3D12App::Update()
 
     mResourceGroup.mObjects["box"]->UpdateBuffer(bufferNum);
     mResourceGroup.mObjects["box2"]->UpdateBuffer(bufferNum);
+    mConstants.UpdateBuffer(bufferNum);
+
+    D3D12_RECT viewport = Dx12Device::GetViewportSize();
+
+    float aspect = (float)viewport.right / (float)viewport.bottom;
+
+    DirectX::XMFLOAT4X4 projection;
+    DirectX::XMMATRIX projMat = DirectX::XMMatrixPerspectiveFovLH(0.25f * DirectX::XM_PI, aspect, 1.0f, 1000.0f);
+
+    DirectX::XMStoreFloat4x4(&projection, XMMatrixTranspose(projMat));
+
+    mConstants.mWorldConstants.mProjMat = projection;
     mConstants.UpdateBuffer(bufferNum);
 }
 
@@ -286,6 +306,18 @@ void D3D12App::Run()
 
     while (mRunning)
     {
+        if (mResizeQueue.size() > 0)
+        {
+            int size = mResizeQueue.size();
+            DirectX::XMINT2 newSize;
+            for (int i = 0; i < size; ++i)
+            {
+                newSize = mResizeQueue.front();
+                mResizeQueue.pop();
+            }
+
+            Dx12Device::Resize(newSize.x, newSize.y);
+        }
         Update();
         Render();
     }
@@ -294,4 +326,15 @@ void D3D12App::Run()
 void D3D12App::Stop()
 {
     mRunning = false;
+}
+
+void D3D12App::Resize(UINT newWidth, UINT newHeight)
+{
+    DirectX::XMINT2 newSize(newWidth, newHeight);
+    mResizeQueue.push(newSize);
+}
+
+void D3D12App::PollInputs()
+{
+
 }

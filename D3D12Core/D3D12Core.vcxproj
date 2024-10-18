@@ -21,6 +21,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GBufferPass.h" />
+    <ClInclude Include="InputState.h" />
     <ClInclude Include="LightingPass.h" />
     <ClInclude Include="Renderer\AppConstants.h" />
     <ClInclude Include="D3D12App.h" />

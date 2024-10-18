@@ -33,6 +33,7 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 HANDLE threadHandle;
 D3D12App* gApp;
+HWND mhWnd;
 
 DWORD WINAPI RunAppThread(LPVOID lpParam)
 {
@@ -60,9 +61,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     MyRegisterClass(hInstance);
 
 
-    HWND hWnd;
+    //HWND hWnd;
     // Perform application initialization:
-    if (!InitInstance (hInstance, nCmdShow, &hWnd))
+    if (!InitInstance (hInstance, nCmdShow, &mhWnd))
     {
         return FALSE;
     }
@@ -74,7 +75,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     MSG msg;
 
     // New encapsulated App method
-    gApp = new D3D12App(hWnd, 600, 600, true);
+    gApp = new D3D12App(mhWnd, 600, 600, true);
 
     gApp->Init();
 
@@ -208,6 +209,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             PostQuitMessage(0);
         }
         break;
+    case WM_EXITSIZEMOVE:
+        {// OutputDebugString(L"\n\nResize end\n\n");
+            RECT windowSize = {};
+            if (GetWindowRect(mhWnd, &windowSize))
+            {
+                UINT width = windowSize.right - windowSize.left;
+                UINT height = windowSize.bottom - windowSize.top;
+
+                gApp->Resize(width, height);
+            }
+
+            return 0;
+        }
+    case WM_GETMINMAXINFO:
+        ((MINMAXINFO*)lParam)->ptMinTrackSize.x = 200;
+        ((MINMAXINFO*)lParam)->ptMinTrackSize.y = 200;
+        return 0;
     default:
         return DefWindowProc(hWnd, message, wParam, lParam);
     }

@@ -71,6 +71,8 @@ public:
 	static GBuffer* GetGBuffer();
 
 	static D3D12_RECT GetViewportSize();
+
+	static void Resize(int width, int height);
 	
 
 private:
@@ -131,5 +133,6 @@ private:
 
 	// Self contained GBuffer including heaps, resources, and descriptors
 	GBuffer mGBuffer;
+
 };
 
