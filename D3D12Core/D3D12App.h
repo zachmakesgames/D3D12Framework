@@ -10,6 +10,7 @@
 #include "GBufferPass.h"
 #include "LightingPass.h"
 #include "Renderer/AppConstants.h"
+#include "InputState.h"
 #include <queue>
 #include <chrono>
 
@@ -56,10 +57,14 @@ private:
 
 	// Great for a simple demo, but ideally each object will handle their own state
 	float mObjectRotation = 0;
+	// Camera position for a demo
+	DirectX::XMFLOAT3 mCameraPosition = { 0,0,0 };
 
 	std::queue<DirectX::XMINT2> mResizeQueue;
 
 	std::chrono::time_point<std::chrono::high_resolution_clock> mFrameTimer = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double, std::milli> mFrameDuration;
+
+	InputState mInputState;
 };
 

@@ -227,12 +227,37 @@ void D3D12App::CreatePSOs()
 
 void D3D12App::Update()
 {
+    mInputState.PollKeyboard();
 
     auto lastTime = mFrameTimer;
     mFrameTimer = std::chrono::high_resolution_clock::now();
     mFrameDuration = mFrameTimer - lastTime;
 
     float dt = mFrameDuration.count();
+    float cameraSpeed = 0.01;
+
+    if (mInputState.IsKeyDown("W"))
+    {
+        mCameraPosition.z += -1 * cameraSpeed * dt;
+    }
+    if (mInputState.IsKeyDown("S"))
+    {
+        mCameraPosition.z += 1 * cameraSpeed * dt;
+    }
+    if (mInputState.IsKeyDown("D"))
+    {
+        mCameraPosition.x += -1 * cameraSpeed * dt;
+    }
+    if (mInputState.IsKeyDown("A"))
+    {
+        mCameraPosition.x += 1 * cameraSpeed * dt;
+    }
+
+    std::string x = std::to_string(mCameraPosition.x);
+    std::string y = std::to_string(mCameraPosition.y);
+    std::string z = std::to_string(mCameraPosition.z);
+    std::string msg = "Camera position: <" + x + ", " + y + ", " + z + ">\r\n";
+    //OutputDebugStringA(msg.c_str());
 
     UINT bufferNum = Dx12Device::FrameNumToBufferNum(mFrameCount);
 
@@ -268,6 +293,13 @@ void D3D12App::Update()
     DirectX::XMMATRIX projMat = DirectX::XMMatrixPerspectiveFovLH(0.25f * DirectX::XM_PI, aspect, 1.0f, 1000.0f);
 
     DirectX::XMStoreFloat4x4(&projection, XMMatrixTranspose(projMat));
+
+
+    DirectX::XMMATRIX cameraPosition = DirectX::XMMatrixTranslation(mCameraPosition.x, mCameraPosition.y, mCameraPosition.z);
+    DirectX::XMFLOAT4X4 cameraPosition4;
+    DirectX::XMStoreFloat4x4(&cameraPosition4, DirectX::XMMatrixTranspose(cameraPosition));
+    mConstants.mWorldConstants.mViewMat = cameraPosition4;
+
 
     mConstants.mWorldConstants.mProjMat = projection;
     mConstants.UpdateBuffer(bufferNum);
