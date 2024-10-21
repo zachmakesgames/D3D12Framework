@@ -2,6 +2,7 @@ struct VertexIn{
     float3 Pos      : POSITION;
     float3 Norm     : NORMAL;
     float2 Tex      : TEXCOORD;
+    float4x4 instTransform : INSTTRANSFORM;
 };
 
 struct VertexOut{
@@ -20,6 +21,7 @@ cbuffer cbWorld : register(b0)
 cbuffer cbObject : register(b1)
 {
     float4x4 worldTransform;
+    bool isInstanced;
 };
 
 struct PixelOut
@@ -46,7 +48,18 @@ VertexOut vsMain(VertexIn vIn)
 {
     VertexOut vOut = (VertexOut)0.0f;
 
-    float4x4 MV = mul(worldTransform, viewMat);
+    float4x4 transform;
+
+    if(isInstanced)
+    {
+        transform = vIn.instTransform;
+    }
+    else
+    {
+        transform = worldTransform;
+    }
+
+    float4x4 MV = mul(transform, viewMat);
 
     float4x4 MVP = mul(MV, projMat);
 
@@ -54,10 +67,10 @@ VertexOut vsMain(VertexIn vIn)
 
 
 
-    float4 posW = mul(float4(vIn.Pos, 1.0f), worldTransform);
+    float4 posW = mul(float4(vIn.Pos, 1.0f), transform);
     vOut.PosL = posW.xyz;
 
-    vOut.Norm = mul(vIn.Norm, (float3x3) worldTransform);
+    vOut.Norm = mul(vIn.Norm, (float3x3) transform);
     //vOut.Norm = vIn.Norm;
 
     vOut.PosH = newVert;

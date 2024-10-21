@@ -20,6 +20,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="GBufferPass.h" />
     <ClInclude Include="InputState.h" />
     <ClInclude Include="LightingPass.h" />
@@ -43,6 +44,7 @@
     <ClInclude Include="Renderer\ResourceGroup.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="D3D12App.cpp" />
     <ClCompile Include="ForwardPass.cpp" />
     <ClCompile Include="GBufferPass.cpp" />

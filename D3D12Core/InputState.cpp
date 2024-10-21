@@ -7,6 +7,35 @@ InputState::InputState()
 		mKeyCodes[inp.mName] = inp.mVirtKey;
 		mKeyStates[inp.mVirtKey] = KeyState::KeyStateUp;
 	}
+
+	// Init stuff for DirectInput, if I ever decide to us it
+	//HINSTANCE appInst = GetModuleHandle(NULL);
+	//HRESULT hr = DirectInput8Create(appInst, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&mDirectInput, NULL);
+	//if (FAILED(hr))
+	//{
+	//	OutputDebugStringA("Failed to init direct input!\r\n");
+	//}
+
+	//hr = mDirectInput->CreateDevice(GUID_SysMouse, &mDIMouse, NULL);
+	//if (FAILED(hr))
+	//{
+	//	OutputDebugStringA("Failed to init direct input mouse device!\r\n");
+	//}
+
+	//hr = mDIMouse->SetDataFormat(&c_dfDIMouse);
+	//if (FAILED(hr))
+	//{
+	//	OutputDebugStringA("Failed to set mouse data format!\r\n");
+	//}
+
+	//// May need to set cooperation level, but we need the window handle
+	//mDIMouse->Acquire();
+}
+
+InputState::~InputState()
+{
+	//mDIMouse->Unacquire();
+	//mDirectInput->Release();
 }
 
 void InputState::PollKeyboard()
@@ -17,14 +46,11 @@ void InputState::PollKeyboard()
 		int virtKey = iter.second;
 
 		KeyState currentState = mKeyStates[virtKey];
-		std::string msg = "Key state for key " + keyCode + " has changed to";
 
 		if (GetKeyState(virtKey) & 0x8000)
 		{
 			if (currentState != KeyState::KeyStateDown)
 			{
-				msg += " down\r\n";
-				OutputDebugStringA(msg.c_str());
 				mKeyStates[virtKey] = KeyState::KeyStateDown;
 			}
 		}
@@ -32,17 +58,41 @@ void InputState::PollKeyboard()
 		{
 			if (currentState != KeyState::KeyStateUp)
 			{
-				msg += " up\r\n";
-				OutputDebugStringA(msg.c_str());
 				mKeyStates[virtKey] = KeyState::KeyStateUp;
 			}
 		}
 	}
 }
 
-void InputState::PollMouse()
+void InputState::PollMouse(HWND window)
 {
+	POINT newPosition = {};
+	GetCursorPos(&newPosition);
 
+	//DIMOUSESTATE newState;
+	//mDIMouse->GetDeviceState(sizeof(DIMOUSESTATE), &newState);
+
+	// Can use this to transform the mouse position to client space instead
+	// of to screen space
+	/*if (window != NULL)
+	{
+		ScreenToClient(window, &newPosition);
+	}*/
+	mMouseDeltaPosition = { newPosition.x - mMousePosition.x, newPosition.y - mMousePosition.y };
+	mMousePosition = newPosition;
+	
+	//mMouseDeltaPosition = { newState.lX - mMousePosition.x, newState.lY - mMousePosition.y };
+	//mMousePosition = { newState.lX, newState.lY };
+}
+
+POINT InputState::GetMousePosition()
+{
+	return mMousePosition;
+}
+
+POINT InputState::GetMouseChange()
+{
+	return mMouseDeltaPosition;
 }
 
 void InputState::OnKeyStateChange(std::string keyCode, KeyState newState)

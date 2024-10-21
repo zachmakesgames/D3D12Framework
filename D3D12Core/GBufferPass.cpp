@@ -4,7 +4,8 @@
 void GBufferPass::PreRender(UINT frameNumber)
 {
     auto cmdList = Dx12Device::GetCommandList();
-    GBuffer* gBuffer = Dx12Device::GetGBuffer();
+    GBuffer* gBuffer = nullptr;
+    gBuffer = Dx12Device::GetGBuffer();
 
     UINT bufferNumber = Dx12Device::FrameNumToBufferNum(frameNumber);
 
@@ -79,6 +80,7 @@ void GBufferPass::Render(UINT frameNumber)
 
     for (RenderObject* ref : mRenderObjectRefs)
     {
+        
         cmdList->SetGraphicsRootConstantBufferView(1, ref->GetBuffer(bufferNum)->mUploadBuffer->GetGPUVirtualAddress());
 
         auto SrvGpuHandle = mResourceGroup->mTextures[ref->mTextureRef].mSrvHandle.mGpuHandle;
@@ -88,17 +90,34 @@ void GBufferPass::Render(UINT frameNumber)
         Mesh* mesh = mResourceGroup->mGeometry[ref->mMeshRef].get();
 
         cmdList->IASetVertexBuffers(0, 1, &mesh->mVertexBufferView);
+        
+        if (ref->IsInstanced())
+        {
+            D3D12_VERTEX_BUFFER_VIEW instBufferView = {};
+            Buffer* instBuffer = ref->GetInstanceBuffer(bufferNum);
+            instBufferView.BufferLocation = instBuffer->mUploadBuffer->GetGPUVirtualAddress();
+            instBufferView.SizeInBytes = ref->GetInstBufferSize();
+            instBufferView.StrideInBytes = sizeof(RenderItemInstanceValues);
+
+            //returnMesh->mVertexBufferView.BufferLocation = returnMesh->mVertexBuffer->mResource->GetGPUVirtualAddress();
+            //returnMesh->mVertexBufferView.SizeInBytes = returnMesh->mVertexCount * sizeof(Vertex);
+            //returnMesh->mVertexBufferView.StrideInBytes = sizeof(Vertex);
+            // Bind the instance buffer
+            cmdList->IASetVertexBuffers(1, 1, &instBufferView);
+        }
+
         cmdList->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
         UINT count = mesh->mVertexCount;
-        cmdList->DrawInstanced(count, 1, 0, 0);
+        cmdList->DrawInstanced(count, ref->mInstanceCount, 0, 0);
     }
 }
 
 void GBufferPass::PostRender(UINT frameNumber)
 {
     auto cmdList = Dx12Device::GetCommandList();
-    GBuffer* gBuffer = Dx12Device::GetGBuffer();
+    GBuffer* gBuffer = nullptr;
+    gBuffer = Dx12Device::GetGBuffer();
 
     // Transition the GBuffer resources
     CD3DX12_RESOURCE_BARRIER rtvTransitions[6] =

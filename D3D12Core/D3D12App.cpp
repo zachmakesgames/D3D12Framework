@@ -27,11 +27,50 @@ void D3D12App::Init()
     CreateShaders();
     CreatePSOs();
 
+    RenderObjectInit boxInit = { "box", "TestPattern", false, 1 };
+    RenderObjectInit d20Init = { "d20", "TestPattern", false, 1 };
     
-    mResourceGroup.mObjects["box"] = std::make_unique<RenderObject>("box");
-    mResourceGroup.mObjects["box"]->mTextureRef = "TestPattern";
-    mResourceGroup.mObjects["box2"] = std::make_unique<RenderObject>("d20");
-    mResourceGroup.mObjects["box2"]->mTextureRef = "TestPattern";
+    
+    mResourceGroup.mObjects["box"] = std::make_unique<RenderObject>(boxInit);
+    mResourceGroup.mObjects["box2"] = std::make_unique<RenderObject>(d20Init);
+
+    // Instanced rendering example with new support for instances built into 
+    // RenderObject
+    RenderObjectInit d20InstInit = { "d20", "TestPattern", true, 20 };
+    mResourceGroup.mObjects["d20Inst"] = std::make_unique<RenderObject>(d20InstInit);
+
+    DirectX::XMFLOAT3 instTransforms[] =
+    {
+        DirectX::XMFLOAT3(10, 0, 10),
+        DirectX::XMFLOAT3(10, 0, -10),
+        DirectX::XMFLOAT3(-10, 0, 10),
+        DirectX::XMFLOAT3(-10, 0, -10),
+        DirectX::XMFLOAT3(5, 0, 7),
+        DirectX::XMFLOAT3(7, 0, 5),
+        DirectX::XMFLOAT3(-5, 0, 7),
+        DirectX::XMFLOAT3(-7, 0, 5),
+        DirectX::XMFLOAT3(5, 0, -7),
+        DirectX::XMFLOAT3(7, 0, -5),
+        DirectX::XMFLOAT3(-5, 0, -7),
+        DirectX::XMFLOAT3(-7, 0, -5),
+    };
+
+    for (int i = 0; i < d20InstInit.instanceCount; ++i)
+    {
+        DirectX::XMFLOAT3 offset = instTransforms[i % 12];
+        DirectX::XMMATRIX offsetMat = DirectX::XMMatrixTranslation(offset.x, offset.y, offset.z);
+
+        DirectX::XMFLOAT4X4 offsetMat4;
+        DirectX::XMStoreFloat4x4(&offsetMat4, DirectX::XMMatrixTranspose(offsetMat));
+
+        mResourceGroup.mObjects["d20Inst"]->mInstanceValues[i].instanceTransform = offsetMat4;
+    }
+
+    for (int i = 0; i < Dx12Device::GetSwapchainBufferCount(); ++i)
+    {
+        mResourceGroup.mObjects["d20Inst"]->UpdateInstanceBuffer(i);
+    }
+    
 
     // A basic forward rendering pass
     mPasses["mainPass"] = new ForwardPass(&mResourceGroup, &mConstants);
@@ -47,6 +86,7 @@ void D3D12App::Init()
 
     mPasses["deferredPass"]->RegisterRenderObject(mResourceGroup.mObjects["box"].get());
     mPasses["deferredPass"]->RegisterRenderObject(mResourceGroup.mObjects["box2"].get());
+    mPasses["deferredPass"]->RegisterRenderObject(mResourceGroup.mObjects["d20Inst"].get());
 
     // The lighting pass for deferred lighting
     mPasses["deferredLightingPass"] = new LightingPass(&mResourceGroup, &mConstants);
@@ -93,6 +133,7 @@ void D3D12App::Init()
     DirectX::XMFLOAT4X4 translationFloat2;
     DirectX::XMStoreFloat4x4(&translationFloat2, XMMatrixTranspose(transform2));
     mResourceGroup.mObjects["box2"]->mConstants.worldTransform = translationFloat2;
+
 
 
     cmdList->Close();
@@ -170,12 +211,20 @@ void D3D12App::CreateShaders()
 // TODO: Leave this for only very common PSOs, allow GraphicsPasses to create their own resources
 void D3D12App::CreatePSOs()
 {
-    GBuffer* gBuffer = Dx12Device::GetGBuffer();
+    GBuffer* gBuffer = nullptr;
+    gBuffer = Dx12Device::GetGBuffer();
 
     std::vector<D3D12_INPUT_ELEMENT_DESC> inputLayout = {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
         { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
         { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+
+        // Instance transform for per instance draws. To pass a 4x4 matrix, we need to specify it as 4 separate float4s
+        // But we can access them as a single float4x4 in HLSL with just INSTTRANSFORM
+        { "INSTTRANSFORM", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
+        { "INSTTRANSFORM", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 16, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
+        { "INSTTRANSFORM", 2, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 32, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
+        { "INSTTRANSFORM", 3, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 48, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
     };
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
@@ -228,6 +277,7 @@ void D3D12App::CreatePSOs()
 void D3D12App::Update()
 {
     mInputState.PollKeyboard();
+    mInputState.PollMouse(mWindow);
 
     auto lastTime = mFrameTimer;
     mFrameTimer = std::chrono::high_resolution_clock::now();
@@ -236,28 +286,70 @@ void D3D12App::Update()
     float dt = mFrameDuration.count();
     float cameraSpeed = 0.01;
 
+    DirectX::XMFLOAT3 cameraForward = mCamera.GetForwardVector();
+    DirectX::XMFLOAT3 cameraRight = mCamera.GetRightVector();
+    DirectX::XMFLOAT3 cameraUp = mCamera.GetUpVector();
+
+    DirectX::XMVECTOR cameraForwardV = DirectX::XMLoadFloat3(&cameraForward);
+    DirectX::XMVECTOR cameraRightV = DirectX::XMLoadFloat3(&cameraRight);
+    DirectX::XMVECTOR cameraUpV = DirectX::XMLoadFloat3(&cameraUp);
+
     if (mInputState.IsKeyDown("W"))
     {
-        mCameraPosition.z += -1 * cameraSpeed * dt;
+        DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraForwardV, -1 * cameraSpeed * dt);
+        mCamera.AddPosition(cameraOffset);
+        
     }
     if (mInputState.IsKeyDown("S"))
     {
-        mCameraPosition.z += 1 * cameraSpeed * dt;
+        DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraForwardV, 1 * cameraSpeed * dt);
+        mCamera.AddPosition(cameraOffset);
     }
     if (mInputState.IsKeyDown("D"))
     {
-        mCameraPosition.x += -1 * cameraSpeed * dt;
+
+        DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraRightV, -1 * cameraSpeed * dt);
+        mCamera.AddPosition(cameraOffset);
     }
     if (mInputState.IsKeyDown("A"))
     {
-        mCameraPosition.x += 1 * cameraSpeed * dt;
+        DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraRightV, 1 * cameraSpeed * dt);
+        mCamera.AddPosition(cameraOffset);
     }
 
-    std::string x = std::to_string(mCameraPosition.x);
-    std::string y = std::to_string(mCameraPosition.y);
-    std::string z = std::to_string(mCameraPosition.z);
-    std::string msg = "Camera position: <" + x + ", " + y + ", " + z + ">\r\n";
-    //OutputDebugStringA(msg.c_str());
+    if (mInputState.IsKeyDown("R"))
+    {
+        mCamera.SetPosition(DirectX::XMFLOAT3(0, 0, 0));
+        mCamera.SetYaw(0);
+        mCamera.SetPitch(0);
+    }
+
+    if (mInputState.IsKeyDown("LEFTMOUSE"))
+    {
+        POINT mousePos = mInputState.GetMouseChange();
+        if (mousePos.x != 0 || mousePos.y != 0)
+        {
+            float x = (float)mousePos.x / (float)mWidth;
+            float y = (float)mousePos.y / (float)mHeight;
+
+            // The camera movement is a bit weird, if we multiply it
+            // by the frame time then it jumps wildly and randomly with
+            // only minor differences in mouse position. The problem seems
+            // to be limited by not multiplying by dt, but it can still be
+            // noticed subtly
+
+            x = x * -1.f * 40.f;
+            y = y * -1.f * 40.f;
+            mCamera.AddPitch(DirectX::XMConvertToRadians(y));
+            mCamera.AddYaw(DirectX::XMConvertToRadians(x));
+
+            //x = x * DirectX::XM_PI * dt * -1;
+            //y = y * DirectX::XM_PI * dt * -1;
+            //mCamera.AddPitch(y);
+            //mCamera.AddYaw(x);
+
+        }
+    }
 
     UINT bufferNum = Dx12Device::FrameNumToBufferNum(mFrameCount);
 
@@ -294,11 +386,7 @@ void D3D12App::Update()
 
     DirectX::XMStoreFloat4x4(&projection, XMMatrixTranspose(projMat));
 
-
-    DirectX::XMMATRIX cameraPosition = DirectX::XMMatrixTranslation(mCameraPosition.x, mCameraPosition.y, mCameraPosition.z);
-    DirectX::XMFLOAT4X4 cameraPosition4;
-    DirectX::XMStoreFloat4x4(&cameraPosition4, DirectX::XMMatrixTranspose(cameraPosition));
-    mConstants.mWorldConstants.mViewMat = cameraPosition4;
+    mConstants.mWorldConstants.mViewMat = mCamera.GetViewMatrix();// cameraPosition4;
 
 
     mConstants.mWorldConstants.mProjMat = projection;

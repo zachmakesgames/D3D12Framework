@@ -11,6 +11,7 @@
 #include "LightingPass.h"
 #include "Renderer/AppConstants.h"
 #include "InputState.h"
+#include "Camera.h"
 #include <queue>
 #include <chrono>
 
@@ -66,5 +67,8 @@ private:
 	std::chrono::duration<double, std::milli> mFrameDuration;
 
 	InputState mInputState;
+	Camera mCamera;
+
+	float mframeTimeAverage = 0;
 };
 

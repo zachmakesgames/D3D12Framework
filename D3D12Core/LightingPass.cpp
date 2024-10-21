@@ -6,7 +6,8 @@ void LightingPass::PreRender(UINT frameNumber)
 
     UINT bufferNumber = Dx12Device::FrameNumToBufferNum(frameNumber);
 
-    GBuffer* gBuffer = Dx12Device::GetGBuffer();
+    GBuffer* gBuffer = nullptr;
+    gBuffer = Dx12Device::GetGBuffer();
 
     D3D12_RECT rect = Dx12Device::GetViewportSize();
 

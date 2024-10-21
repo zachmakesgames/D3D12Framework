@@ -457,6 +457,8 @@ D3D12_CPU_DESCRIPTOR_HANDLE Dx12Device::GetDepthStencilView()
 
 std::unique_ptr<Buffer> Dx12Device::CreateBuffer(const void* data, UINT64 bufferSize)
 {
+	UINT64 mod = bufferSize % 250;
+	bufferSize += (250 - mod);
 
 	auto newBuffer = std::make_unique<Buffer>();
 

@@ -2,6 +2,12 @@
 #include <Windows.h>
 #include <unordered_map>
 #include <WinUser.h>
+#include <DirectXMath.h>
+
+#pragma comment(lib, "dinput8.lib")
+#pragma comment(lib, "dxguid.lib")
+
+#include <dinput.h>
 
 enum class KeyState
 {
@@ -15,18 +21,30 @@ struct Input
 	int mVirtKey;
 };
 
-class InputState
+class __declspec(dllexport) InputState
 {
 public:
 	InputState();
+	~InputState();
 	void PollKeyboard();
-	void PollMouse();
+	void PollMouse(HWND window = NULL);
 	void OnKeyStateChange(std::string keyCode, KeyState newState);
 	bool IsKeyDown(std::string keyCode);
+	POINT GetMousePosition();
+	POINT GetMouseChange();
 
 private:
 	std::unordered_map<std::string, int> mKeyCodes;
 	std::unordered_map<int, KeyState> mKeyStates;
+	POINT mMousePosition;
+	POINT mMouseDeltaPosition;
+
+	// Member variables used for DirectInput
+	// DirectInput seemed to have more problems
+	// to give than it did to solve. sad.
+	// IDirectInputDevice8* mDIMouse;
+	// DIMOUSESTATE mMouseState;
+	// LPDIRECTINPUT8 mDirectInput;
 
 	std::vector<Input> mInputs =
 	{
