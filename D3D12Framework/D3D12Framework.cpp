@@ -210,12 +210,31 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             PostQuitMessage(0);
         }
         break;
-    case WM_SIZE:
+    /*case WM_SIZE:
+        {
+            OutputDebugStringA("SIZE\r\n");
+            if (wParam == 2 || wParam == 3 || wParam == 0)
+            {
+                if (gApp != nullptr && gApp->IsInited())
+                {
+                    RECT windowSize = {};
+                    if (GetWindowRect(mhWnd, &windowSize))
+                    {
+                        UINT width = windowSize.right - windowSize.left;
+                        UINT height = windowSize.bottom - windowSize.top;
+
+                        gApp->Resize(width, height);
+                    }
+                }
+            }
+        }
+        break;*/
     case WM_EXITSIZEMOVE:
         {// OutputDebugString(L"\n\nResize end\n\n");
 
+            OutputDebugStringA("EXITSIZEMOVE\r\n");
             // TODO: Handle cases when window is hidden
-            if (gApp != nullptr && gApp->IsInited())
+            if (gApp != nullptr)
             {
                 RECT windowSize = {};
                 if (GetWindowRect(mhWnd, &windowSize))
@@ -224,6 +243,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     UINT height = windowSize.bottom - windowSize.top;
 
                     gApp->Resize(width, height);
+
+                    std::string wStr = std::to_string(width);
+                    std::string hStr = std::to_string(height);
+                    std::string msg = "Window resizing to " + wStr + ", " + hStr + "\r\n";
+                    OutputDebugStringA(msg.c_str());
                 }
             }
 

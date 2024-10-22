@@ -424,12 +424,28 @@ void D3D12App::Run()
     {
         if (mResizeQueue.size() > 0)
         {
+            OutputDebugStringA("Resize queue not empty, Getting new size\r\n");
             int size = mResizeQueue.size();
             DirectX::XMINT2 newSize;
             for (int i = 0; i < size; ++i)
             {
+                OutputDebugStringA("Pop\r\n");
                 newSize = mResizeQueue.front();
                 mResizeQueue.pop();
+            }
+
+            std::string wStr = std::to_string(newSize.x);
+            std::string hStr = std::to_string(newSize.y);
+            std::string msg = "App resizing to " + wStr + ", " + hStr + "\r\n";
+            OutputDebugStringA(msg.c_str());
+
+            RECT windowSize = {};
+            if (GetWindowRect(mWindow, &windowSize))
+            {
+                std::string wStr1 = std::to_string(windowSize.right - windowSize.left);
+                std::string hStr1 = std::to_string(windowSize.bottom - windowSize.top);
+                std::string msg1 = "Actual window size: " + wStr1 + ", " + hStr1 + "\r\n";
+                OutputDebugStringA(msg1.c_str());
             }
 
             Dx12Device::Resize(newSize.x, newSize.y);
