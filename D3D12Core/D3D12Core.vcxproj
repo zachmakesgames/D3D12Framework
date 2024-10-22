@@ -42,6 +42,7 @@
     <ClInclude Include="Renderer\Utils.h" />
     <ClInclude Include="Renderer\Vertex.h" />
     <ClInclude Include="Renderer\ResourceGroup.h" />
+    <ClInclude Include="Scene.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />

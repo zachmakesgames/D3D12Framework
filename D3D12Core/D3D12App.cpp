@@ -1,4 +1,5 @@
 #include "D3D12App.h"
+#include <random>
 
 D3D12App::D3D12App(HWND window, int swapchainWidth, int swapchainHeight, bool windowed):
 	mWindow(window), mWidth(swapchainWidth), mHeight(swapchainHeight), mWindowed(windowed)
@@ -36,29 +37,22 @@ void D3D12App::Init()
 
     // Instanced rendering example with new support for instances built into 
     // RenderObject
-    RenderObjectInit d20InstInit = { "d20", "TestPattern", true, 20 };
+    RenderObjectInit d20InstInit = { "d20", "TestPattern", true, 2000 };
     mResourceGroup.mObjects["d20Inst"] = std::make_unique<RenderObject>(d20InstInit);
 
-    DirectX::XMFLOAT3 instTransforms[] =
-    {
-        DirectX::XMFLOAT3(10, 0, 10),
-        DirectX::XMFLOAT3(10, 0, -10),
-        DirectX::XMFLOAT3(-10, 0, 10),
-        DirectX::XMFLOAT3(-10, 0, -10),
-        DirectX::XMFLOAT3(5, 0, 7),
-        DirectX::XMFLOAT3(7, 0, 5),
-        DirectX::XMFLOAT3(-5, 0, 7),
-        DirectX::XMFLOAT3(-7, 0, 5),
-        DirectX::XMFLOAT3(5, 0, -7),
-        DirectX::XMFLOAT3(7, 0, -5),
-        DirectX::XMFLOAT3(-5, 0, -7),
-        DirectX::XMFLOAT3(-7, 0, -5),
-    };
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> distro(-200, 200);
 
     for (int i = 0; i < d20InstInit.instanceCount; ++i)
     {
-        DirectX::XMFLOAT3 offset = instTransforms[i % 12];
-        DirectX::XMMATRIX offsetMat = DirectX::XMMatrixTranslation(offset.x, offset.y, offset.z);
+
+        int x = distro(gen);
+        int y = distro(gen);
+        int z = distro(gen);
+        //DirectX::XMFLOAT3 offset = instTransforms[i % 12];
+        //DirectX::XMMATRIX offsetMat = DirectX::XMMatrixTranslation(offset.x, offset.y, offset.z);
+        DirectX::XMMATRIX offsetMat = DirectX::XMMatrixTranslation(x, y, z);
 
         DirectX::XMFLOAT4X4 offsetMat4;
         DirectX::XMStoreFloat4x4(&offsetMat4, DirectX::XMMatrixTranspose(offsetMat));
@@ -141,6 +135,8 @@ void D3D12App::Init()
     ID3D12CommandList* lists[] = { cmdList.Get() };
     cmdQueue->ExecuteCommandLists(_countof(lists), lists);
     Dx12Device::FlushQueue(true);
+
+    mInited = true;
 }
 
 // TODO: Leave this for only very common root signatures, allow GraphicsPasses to create their own resources
@@ -284,7 +280,7 @@ void D3D12App::Update()
     mFrameDuration = mFrameTimer - lastTime;
 
     float dt = mFrameDuration.count();
-    float cameraSpeed = 0.01;
+    float cameraSpeed = 0.1;
 
     DirectX::XMFLOAT3 cameraForward = mCamera.GetForwardVector();
     DirectX::XMFLOAT3 cameraRight = mCamera.GetRightVector();
@@ -386,7 +382,7 @@ void D3D12App::Update()
 
     DirectX::XMStoreFloat4x4(&projection, XMMatrixTranspose(projMat));
 
-    mConstants.mWorldConstants.mViewMat = mCamera.GetViewMatrix();// cameraPosition4;
+    mConstants.mWorldConstants.mViewMat = mCamera.GetViewMatrix();
 
 
     mConstants.mWorldConstants.mProjMat = projection;
@@ -455,6 +451,11 @@ void D3D12App::Resize(UINT newWidth, UINT newHeight)
 }
 
 void D3D12App::PollInputs()
+{
+
+}
+
+void D3D12App::LoadScene(Scene* newScene)
 {
 
 }

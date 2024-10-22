@@ -98,6 +98,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         }
     }
 
+    gApp->CleanResources();
+
     return (int) msg.wParam;
 }
 
@@ -208,15 +210,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             PostQuitMessage(0);
         }
         break;
+    case WM_SIZE:
     case WM_EXITSIZEMOVE:
         {// OutputDebugString(L"\n\nResize end\n\n");
-            RECT windowSize = {};
-            if (GetWindowRect(mhWnd, &windowSize))
-            {
-                UINT width = windowSize.right - windowSize.left;
-                UINT height = windowSize.bottom - windowSize.top;
 
-                gApp->Resize(width, height);
+            // TODO: Handle cases when window is hidden
+            if (gApp != nullptr && gApp->IsInited())
+            {
+                RECT windowSize = {};
+                if (GetWindowRect(mhWnd, &windowSize))
+                {
+                    UINT width = windowSize.right - windowSize.left;
+                    UINT height = windowSize.bottom - windowSize.top;
+
+                    gApp->Resize(width, height);
+                }
             }
 
             return 0;

@@ -11,12 +11,13 @@
 class ResourceGroup
 {
 public:
+	// These will likely stay static for the lifetime of the app
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12RootSignature>> mRootSignatures;
 	std::unordered_map<std::string, std::unique_ptr<Mesh>> mGeometry;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<IDxcBlob>> mShaders;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12PipelineState>> mPSOs;
-
-	std::unordered_map<std::string, std::unique_ptr<RenderObject>> mObjects;
 	std::unordered_map<std::string, Texture> mTextures;
 
+	// These will change with the scene
+	std::unordered_map<std::string, std::unique_ptr<RenderObject>> mObjects;
 };

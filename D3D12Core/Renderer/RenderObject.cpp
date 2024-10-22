@@ -27,3 +27,9 @@ RenderObject::RenderObject(RenderObjectInit initValue)
 		mInstanceBuffers = Dx12Device::GetDevice()->CreateFrameBuffer(mInstanceValues.data(), sizeof(RenderItemInstanceValues) * mInstanceCount);
 	}
 }
+
+RenderObject::~RenderObject()
+{
+	mConstantBuffers.reset();
+	mInstanceBuffers.reset();
+}

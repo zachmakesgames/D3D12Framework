@@ -28,6 +28,7 @@ public:
 	static Dx12Device* GetDevice();
 
 	static void Create();
+	static void Destroy();
 	static void InitSwapchain(HWND window, int swapchainWidth, int swapchainHeight, bool windowed = true);
 	static void DestroySwapchain();
 	static void FlushQueue(bool hardFlush = false);
@@ -85,20 +86,26 @@ private:
 	void ResizeGBuffer(UINT width, UINT height);
 	void BuildGBufferResources();
 	void BuildGBufferDescriptors();
+	void DestroyResources();
 
 
 	static const int mSwapChainBufferCount = 3;
-
-	Microsoft::WRL::ComPtr<IDXGIFactory4> mDxgiFactory;
-	Microsoft::WRL::ComPtr<IDXGISwapChain> mSwapChain;
+	
 	Microsoft::WRL::ComPtr<ID3D12Device> mD3dDevice;
-	Microsoft::WRL::ComPtr<ID3D12Fence> mFence;
-
+	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> mCommandList;
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue> mCommandQueue;
 
 	/// TODO: This may not be the best way to handle this, but it works for now
 	std::array< Microsoft::WRL::ComPtr<ID3D12CommandAllocator>, mSwapChainBufferCount> mDirectCmdListAlloc;
-	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> mCommandList;
+
+	Microsoft::WRL::ComPtr<IDXGIFactory4> mDxgiFactory;
+	Microsoft::WRL::ComPtr<IDXGISwapChain> mSwapChain;
+	
+	Microsoft::WRL::ComPtr<ID3D12Fence> mFence;
+
+	
+
+	
 
 	
 	int mCurrentBackBuffer = 0;

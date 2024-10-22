@@ -513,6 +513,7 @@ std::unique_ptr<FrameBuffer> Dx12Device::CreateFrameBuffer(const void* data, UIN
 	int swapChainCount = sDevice->GetSwapchainBufferCount();
 	newFrameBuffer->mBufferCount = swapChainCount;
 
+	//newFrameBuffer->mBuffers = std::unique_ptr<Buffer[]>(swapChainCount);
 	newFrameBuffer->mBuffers = new std::unique_ptr<Buffer>[swapChainCount];
 
 	for (int i = 0; i < swapChainCount; ++i)
@@ -791,4 +792,37 @@ void Dx12Device::Resize(int width, int height)
 	{
 		sDevice->ResizeSwapchain(width, height);
 	}
+}
+
+void Dx12Device::Destroy()
+{
+	if (sDevice != nullptr)
+	{
+		sDevice->DestroyResources();
+	}
+}
+
+void Dx12Device::DestroyResources()
+{
+	// Clean up our blocks on the floor
+
+	HardFlushCommandQueue();
+	mGBuffer.Destroy();
+
+	for (int i = 0; i < mSwapChainBufferCount; ++i)
+	{
+		mSwapChainBuffer[i].Reset();
+		mDirectCmdListAlloc[i].Reset();
+	}
+
+	mDepthStencilBuffer.Reset();
+	mCbvSrvUavHeap.Reset();
+	mDsvHeap.Reset();
+	mRtvHeap.Reset();
+	mCommandList.Reset();
+	mCommandQueue.Reset();
+	mFence.Reset();
+	mSwapChain.Reset();
+	mD3dDevice.Reset();
+	mDxgiFactory.Reset();
 }

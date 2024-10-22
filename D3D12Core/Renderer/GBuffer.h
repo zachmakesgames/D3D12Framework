@@ -46,6 +46,16 @@ public:
 		return mClearColor;
 	}
 
+	inline void Destroy()
+	{
+		for (int i = 0; i < 6; ++i)
+		{
+			mGBuffer[i].Reset();
+		}
+		mRtvHeap.Reset();
+		mSrvHeap.Reset();
+		mDsvHeap.Reset();
+	}
 
 private:
 	UINT mWidth = 0;

@@ -1,10 +1,12 @@
 #pragma once
+#include <queue>
+#include <chrono>
+#include <unordered_map>
 #include "Renderer/D3D12Common.h"
 #include "Renderer/Dx12Device.h"
 #include "Renderer/Utils.h"
 #include "Renderer/Mesh.h"
 #include "Renderer/GraphicsPass.h"
-#include <unordered_map>
 #include "Renderer/ResourceGroup.h"
 #include "ForwardPass.h"
 #include "GBufferPass.h"
@@ -12,8 +14,8 @@
 #include "Renderer/AppConstants.h"
 #include "InputState.h"
 #include "Camera.h"
-#include <queue>
-#include <chrono>
+#include "Scene.h"
+
 
 class __declspec(dllexport) D3D12App
 {
@@ -28,6 +30,19 @@ public:
 	void Run();
 	void Stop();
 	void Resize(UINT newWidth, UINT newHeight);
+
+	void LoadScene(Scene* newScene);
+
+	inline bool IsInited()
+	{
+		return mInited;
+	}
+
+	inline void CleanResources()
+	{
+		mResourceGroup.mObjects.clear();
+		Dx12Device::Destroy();
+	}
 
 private:
 	void CreateRootSigs();
@@ -58,8 +73,6 @@ private:
 
 	// Great for a simple demo, but ideally each object will handle their own state
 	float mObjectRotation = 0;
-	// Camera position for a demo
-	DirectX::XMFLOAT3 mCameraPosition = { 0,0,0 };
 
 	std::queue<DirectX::XMINT2> mResizeQueue;
 
@@ -70,5 +83,7 @@ private:
 	Camera mCamera;
 
 	float mframeTimeAverage = 0;
+
+	bool mInited = false;
 };
 

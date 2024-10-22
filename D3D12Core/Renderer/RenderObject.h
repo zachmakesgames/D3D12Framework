@@ -28,6 +28,7 @@ class __declspec(dllexport) RenderObject
 {
 public:
 	RenderObject(RenderObjectInit initValue);
+	~RenderObject();
 
 	inline Buffer* GetBuffer(int bufferID)
 	{
