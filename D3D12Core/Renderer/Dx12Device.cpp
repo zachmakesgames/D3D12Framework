@@ -126,11 +126,6 @@ void Dx12Device::ResizeSwapchain(int swapchainWidth, int swapchainHeight)
 		sDevice->mSwapchainWidth = swapchainWidth;
 		sDevice->mSwapchainHeight = swapchainHeight;
 
-		std::string wStr = std::to_string(swapchainWidth);
-		std::string hStr = std::to_string(swapchainHeight);
-		std::string msg = "Dx12Device resizing to " + wStr + ", " + hStr + "\r\n";
-		OutputDebugStringA(msg.c_str());
-
 		HardFlushCommandQueue();
 
 		ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc[mCurrentBackBuffer].Get(), nullptr));

@@ -148,9 +148,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, HWND* hWnd)
    RECT r = { 0, 0, 600, 600 };
    AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW, true);
 
-   /**hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);*/
-   *hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+   // Need to use CreateWindowEX with WS_EX_NOREDIRECTIONBITMAP extended style, otherwise resizing
+   // the window causes some funky corrupton around the edges until the window is moved.
+   *hWnd = CreateWindowEx(WS_EX_NOREDIRECTIONBITMAP, szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
        100, 200, r.right - r.left, r.bottom - r.top, nullptr, nullptr, hInstance, nullptr);
 
    if (!hWnd)
@@ -210,9 +210,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             PostQuitMessage(0);
         }
         break;
-    /*case WM_SIZE:
+    case WM_SIZE:
         {
-            OutputDebugStringA("SIZE\r\n");
             if (wParam == 2 || wParam == 3 || wParam == 0)
             {
                 if (gApp != nullptr && gApp->IsInited())
@@ -228,11 +227,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 }
             }
         }
-        break;*/
+        break;
     case WM_EXITSIZEMOVE:
         {// OutputDebugString(L"\n\nResize end\n\n");
-
-            OutputDebugStringA("EXITSIZEMOVE\r\n");
             // TODO: Handle cases when window is hidden
             if (gApp != nullptr)
             {
@@ -243,11 +240,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                     UINT height = windowSize.bottom - windowSize.top;
 
                     gApp->Resize(width, height);
-
-                    std::string wStr = std::to_string(width);
-                    std::string hStr = std::to_string(height);
-                    std::string msg = "Window resizing to " + wStr + ", " + hStr + "\r\n";
-                    OutputDebugStringA(msg.c_str());
                 }
             }
 

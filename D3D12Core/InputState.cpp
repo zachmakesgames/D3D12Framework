@@ -74,10 +74,10 @@ void InputState::PollMouse(HWND window)
 
 	// Can use this to transform the mouse position to client space instead
 	// of to screen space
-	/*if (window != NULL)
+	if (window != NULL)
 	{
 		ScreenToClient(window, &newPosition);
-	}*/
+	}
 	mMouseDeltaPosition = { newPosition.x - mMousePosition.x, newPosition.y - mMousePosition.y };
 	mMousePosition = newPosition;
 	
