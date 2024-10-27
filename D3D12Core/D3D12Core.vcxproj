@@ -20,6 +20,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\imported\imgui\backends\imgui_impl_dx12.h" />
+    <ClInclude Include="..\imported\imgui\backends\imgui_impl_win32.h" />
+    <ClInclude Include="..\imported\imgui\imconfig.h" />
+    <ClInclude Include="..\imported\imgui\imgui.h" />
+    <ClInclude Include="..\imported\imgui\imgui_internal.h" />
+    <ClInclude Include="..\imported\imgui\imstb_rectpack.h" />
+    <ClInclude Include="..\imported\imgui\imstb_textedit.h" />
+    <ClInclude Include="..\imported\imgui\imstb_truetype.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="GBufferPass.h" />
     <ClInclude Include="InputState.h" />
@@ -45,6 +53,13 @@
     <ClInclude Include="Scene.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\imported\imgui\backends\imgui_impl_dx12.cpp" />
+    <ClCompile Include="..\imported\imgui\backends\imgui_impl_win32.cpp" />
+    <ClCompile Include="..\imported\imgui\imgui.cpp" />
+    <ClCompile Include="..\imported\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\imported\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\imported\imgui\imgui_tables.cpp" />
+    <ClCompile Include="..\imported\imgui\imgui_widgets.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="D3D12App.cpp" />
     <ClCompile Include="ForwardPass.cpp" />
@@ -169,6 +184,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\imported\imgui;$(ProjectDir)\..\imported\imgui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -187,6 +203,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)\..\imported\imgui;$(ProjectDir)\..\imported\imgui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

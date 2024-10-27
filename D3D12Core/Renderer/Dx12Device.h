@@ -17,6 +17,10 @@
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "dxgi.lib")
 
+#include "imgui.h"
+#include "imgui_impl_dx12.h"
+#include "imgui_impl_win32.h"
+
 
 class __declspec(dllexport) Dx12Device
 {
@@ -74,6 +78,8 @@ public:
 	static D3D12_RECT GetViewportSize();
 
 	static void Resize(int width, int height);
+
+	static void InitImGui();
 	
 
 private:
@@ -87,6 +93,7 @@ private:
 	void BuildGBufferResources();
 	void BuildGBufferDescriptors();
 	void DestroyResources();
+	void InitImGuiInternal();
 
 
 	static const int mSwapChainBufferCount = 3;
@@ -119,6 +126,9 @@ private:
 	UINT mDsvHeapOffset = 0;
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mCbvSrvUavHeap;
 	UINT mCbvSrvUavHeapOffset = 0;
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mImGuiCbvSrvHeap;
+	UINT mImGuiCbvSrvHeapOffset = 0;
+
 
 	static const DXGI_FORMAT mBackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	static const DXGI_FORMAT mDepthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -140,6 +150,6 @@ private:
 
 	// Self contained GBuffer including heaps, resources, and descriptors
 	GBuffer mGBuffer;
-
+	HWND mWindow;
 };
 

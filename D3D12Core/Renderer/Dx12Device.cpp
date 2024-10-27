@@ -115,6 +115,14 @@ Dx12Device::Dx12Device()
 
 	ThrowIfFailed(mD3dDevice->CreateDescriptorHeap(&cbvSrvUavHeapDesc, IID_PPV_ARGS(mCbvSrvUavHeap.GetAddressOf())));
 
+	D3D12_DESCRIPTOR_HEAP_DESC imGuiCbvSrvUavHeapDesc = {};
+	imGuiCbvSrvUavHeapDesc.NumDescriptors = 256;
+	imGuiCbvSrvUavHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	imGuiCbvSrvUavHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	imGuiCbvSrvUavHeapDesc.NodeMask = 0;
+
+	ThrowIfFailed(mD3dDevice->CreateDescriptorHeap(&imGuiCbvSrvUavHeapDesc, IID_PPV_ARGS(mImGuiCbvSrvHeap.GetAddressOf())));
+
 	// Set all the fence values to 0
 	memset(mFenceValues, 0x00, sizeof(UINT64)* mSwapChainBufferCount);
 }
@@ -289,6 +297,7 @@ void Dx12Device::InitSwapchain(HWND window, int swapchainWidth, int swapchainHei
 	{
 		sDevice->mSwapchainWidth = swapchainWidth;
 		sDevice->mSwapchainHeight = swapchainHeight;
+		sDevice->mWindow = window;
 
 		// Build the swap chain object
 		sDevice->mSwapChain.Reset();
@@ -825,4 +834,27 @@ void Dx12Device::DestroyResources()
 	mSwapChain.Reset();
 	mD3dDevice.Reset();
 	mDxgiFactory.Reset();
+}
+
+void Dx12Device::InitImGui()
+{
+	if (sDevice != nullptr)
+	{
+		sDevice->InitImGuiInternal();
+	}
+}
+
+void Dx12Device::InitImGuiInternal()
+{
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+	ImGui_ImplWin32_Init(mWindow);
+	ImGui_ImplDX12_Init(mD3dDevice.Get(), mSwapChainBufferCount,
+		mBackBufferFormat, mImGuiCbvSrvHeap.Get(),
+		mImGuiCbvSrvHeap->GetCPUDescriptorHandleForHeapStart(),
+		mImGuiCbvSrvHeap->GetGPUDescriptorHandleForHeapStart());
+
 }
