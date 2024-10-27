@@ -146,12 +146,25 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\imported\imgui\backends\imgui_impl_win32.h" />
+    <ClInclude Include="..\imported\imgui\imconfig.h" />
+    <ClInclude Include="..\imported\imgui\imgui.h" />
+    <ClInclude Include="..\imported\imgui\imgui_internal.h" />
+    <ClInclude Include="..\imported\imgui\imstb_rectpack.h" />
+    <ClInclude Include="..\imported\imgui\imstb_textedit.h" />
+    <ClInclude Include="..\imported\imgui\imstb_truetype.h" />
     <ClInclude Include="D3D12Framework.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\imported\imgui\backends\imgui_impl_win32.cpp" />
+    <ClCompile Include="..\imported\imgui\imgui.cpp" />
+    <ClCompile Include="..\imported\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\imported\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\imported\imgui\imgui_tables.cpp" />
+    <ClCompile Include="..\imported\imgui\imgui_widgets.cpp" />
     <ClCompile Include="D3D12Framework.cpp" />
   </ItemGroup>
   <ItemGroup>

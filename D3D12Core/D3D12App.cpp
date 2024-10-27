@@ -57,7 +57,9 @@ void D3D12App::Init()
         DirectX::XMMATRIX offsetMat = DirectX::XMMatrixTranslation(x, y, z);
 
         DirectX::XMFLOAT4X4 offsetMat4;
-        DirectX::XMStoreFloat4x4(&offsetMat4, DirectX::XMMatrixTranspose(offsetMat));
+        //DirectX::XMStoreFloat4x4(&offsetMat4, DirectX::XMMatrixTranspose(offsetMat));
+        DirectX::XMStoreFloat4x4(&offsetMat4, offsetMat);
+
 
         mResourceGroup.mObjects["d20Inst"]->mInstanceValues[i].instanceTransform = offsetMat4;
     }
@@ -104,7 +106,8 @@ void D3D12App::Init()
     DirectX::XMFLOAT4X4 projection = identF;
     DirectX::XMMATRIX projMat = DirectX::XMMatrixPerspectiveFovLH(0.25f * DirectX::XM_PI, 300.f / 300.f, 1.0f, 1000.0f);
 
-    DirectX::XMStoreFloat4x4(&projection, XMMatrixTranspose(projMat));
+    //DirectX::XMStoreFloat4x4(&projection, XMMatrixTranspose(projMat));
+    DirectX::XMStoreFloat4x4(&projection, projMat);
 
     mConstants.mWorldConstants.mProjMat = projection;
     mConstants.mWorldConstants.mViewMat = identF;
@@ -123,14 +126,18 @@ void D3D12App::Init()
 
     DirectX::XMMATRIX transform = DirectX::XMMatrixMultiply(rot, translation);
     DirectX::XMFLOAT4X4 translationFloat;
-    DirectX::XMStoreFloat4x4(&translationFloat, XMMatrixTranspose(transform));
+    //DirectX::XMStoreFloat4x4(&translationFloat, XMMatrixTranspose(transform));
+    DirectX::XMStoreFloat4x4(&translationFloat, transform);
+
 
     mResourceGroup.mObjects["box"]->mConstants.worldTransform = translationFloat;
 
     DirectX::XMMATRIX translation2 = DirectX::XMMatrixTranslation(-5, 0, 15);
     DirectX::XMMATRIX transform2 = DirectX::XMMatrixMultiply(rot, translation2);
     DirectX::XMFLOAT4X4 translationFloat2;
-    DirectX::XMStoreFloat4x4(&translationFloat2, XMMatrixTranspose(transform2));
+    //DirectX::XMStoreFloat4x4(&translationFloat2, XMMatrixTranspose(transform2));
+    DirectX::XMStoreFloat4x4(&translationFloat2, transform2);
+
     mResourceGroup.mObjects["box2"]->mConstants.worldTransform = translationFloat2;
 
 
@@ -378,14 +385,17 @@ void D3D12App::Update()
 
     DirectX::XMMATRIX transform = DirectX::XMMatrixMultiply(rot, translation);
     DirectX::XMFLOAT4X4 translationFloat;
-    DirectX::XMStoreFloat4x4(&translationFloat, XMMatrixTranspose(transform));
+    //DirectX::XMStoreFloat4x4(&translationFloat, XMMatrixTranspose(transform));
+    DirectX::XMStoreFloat4x4(&translationFloat, transform);
 
     mResourceGroup.mObjects["box"]->mConstants.worldTransform = translationFloat;
 
     DirectX::XMMATRIX translation2 = DirectX::XMMatrixTranslation(-5, 0, 20);
     DirectX::XMMATRIX transform2 = DirectX::XMMatrixMultiply(rot, translation2);
     DirectX::XMFLOAT4X4 translationFloat2;
-    DirectX::XMStoreFloat4x4(&translationFloat2, XMMatrixTranspose(transform2));
+    //DirectX::XMStoreFloat4x4(&translationFloat2, XMMatrixTranspose(transform2));
+    DirectX::XMStoreFloat4x4(&translationFloat2, transform2);
+
     mResourceGroup.mObjects["box2"]->mConstants.worldTransform = translationFloat2;
 
     mResourceGroup.mObjects["box"]->UpdateBuffer(bufferNum);
@@ -399,7 +409,8 @@ void D3D12App::Update()
     DirectX::XMFLOAT4X4 projection;
     DirectX::XMMATRIX projMat = DirectX::XMMatrixPerspectiveFovLH(0.25f * DirectX::XM_PI, aspect, 1.0f, 1000.0f);
 
-    DirectX::XMStoreFloat4x4(&projection, XMMatrixTranspose(projMat));
+    //DirectX::XMStoreFloat4x4(&projection, XMMatrixTranspose(projMat));
+    DirectX::XMStoreFloat4x4(&projection, projMat);
 
     mConstants.mWorldConstants.mViewMat = mCamera.GetViewMatrix();
 

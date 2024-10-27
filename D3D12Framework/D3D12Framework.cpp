@@ -164,6 +164,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, HWND* hWnd)
    return TRUE;
 }
 
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 //
 //  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
 //
@@ -176,6 +177,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, HWND* hWnd)
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+
     switch (message)
     {
     case WM_COMMAND:
