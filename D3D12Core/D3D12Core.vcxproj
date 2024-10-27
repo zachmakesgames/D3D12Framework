@@ -28,8 +28,18 @@
     <ClInclude Include="..\imported\imgui\imstb_rectpack.h" />
     <ClInclude Include="..\imported\imgui\imstb_textedit.h" />
     <ClInclude Include="..\imported\imgui\imstb_truetype.h" />
+    <ClCompile Include="..\imported\imgui\backends\imgui_impl_dx12.cpp" />
+    <ClCompile Include="..\imported\imgui\backends\imgui_impl_win32.cpp" />
+    <ClCompile Include="..\imported\imgui\imgui.cpp" />
+    <ClCompile Include="..\imported\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\imported\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\imported\imgui\imgui_tables.cpp" />
+    <ClCompile Include="..\imported\imgui\imgui_widgets.cpp" />
+  </ItemGroup>
+  <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="GBufferPass.h" />
+    <ClInclude Include="GuiPass.h" />
     <ClInclude Include="InputState.h" />
     <ClInclude Include="LightingPass.h" />
     <ClInclude Include="Renderer\AppConstants.h" />
@@ -53,17 +63,11 @@
     <ClInclude Include="Scene.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\imported\imgui\backends\imgui_impl_dx12.cpp" />
-    <ClCompile Include="..\imported\imgui\backends\imgui_impl_win32.cpp" />
-    <ClCompile Include="..\imported\imgui\imgui.cpp" />
-    <ClCompile Include="..\imported\imgui\imgui_demo.cpp" />
-    <ClCompile Include="..\imported\imgui\imgui_draw.cpp" />
-    <ClCompile Include="..\imported\imgui\imgui_tables.cpp" />
-    <ClCompile Include="..\imported\imgui\imgui_widgets.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="D3D12App.cpp" />
     <ClCompile Include="ForwardPass.cpp" />
     <ClCompile Include="GBufferPass.cpp" />
+    <ClCompile Include="GuiPass.cpp" />
     <ClCompile Include="InputState.cpp" />
     <ClCompile Include="LightingPass.cpp" />
     <ClCompile Include="Renderer\Buffer.cpp" />

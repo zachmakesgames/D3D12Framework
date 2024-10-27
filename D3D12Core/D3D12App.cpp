@@ -11,6 +11,8 @@ void D3D12App::Init()
 	Dx12Device::Create();
 	Dx12Device::InitSwapchain(mWindow, mWidth, mHeight, mWindowed);
 
+    Dx12Device::InitImGui();
+
     // Reset the command list for resource uploads
     auto cmdListAlloc = Dx12Device::GetCurrentFrameAllocator();
     auto cmdList = Dx12Device::GetCommandList();
@@ -86,10 +88,13 @@ void D3D12App::Init()
     mPasses["deferredLightingPass"] = new LightingPass(&mResourceGroup, &mConstants);
     mPasses["deferredLightingPass"]->mPassName = "Deferred lighting pass";
 
+    mPasses["guiPass"] = new GuiPass(&mResourceGroup, &mConstants);
+    mPasses["guiPass"]->mPassName = "GUI Pass";
+
     //mPassGraph.AddPass(mPasses["mainPass"]);          // This would enable forward rendering with no lighting
     mPassGraph.AddPass(mPasses["deferredPass"]);        // These enable deferred rendering with lighting
     mPassGraph.AddPass(mPasses["deferredLightingPass"]);
-
+    mPassGraph.AddPass(mPasses["guiPass"]);
 
     DirectX::XMMATRIX ident = DirectX::XMMatrixIdentity();
     DirectX::XMFLOAT4X4 identF;
@@ -272,6 +277,20 @@ void D3D12App::CreatePSOs()
 
 void D3D12App::Update()
 {
+
+    ImGui_ImplDX12_NewFrame();
+    ImGui_ImplWin32_NewFrame();
+    ImGui::NewFrame();
+
+    /*ImGui::Begin("Hello, world!");
+    ImGui::Text("Testing 1 2 3");
+    ImGui::End();*/
+
+    if (mShowImGuiDemo)
+    {
+        ImGui::ShowDemoWindow(&mShowImGuiDemo);
+    }
+
     mInputState.PollKeyboard();
     mInputState.PollMouse(mWindow);
 
@@ -391,6 +410,8 @@ void D3D12App::Update()
 
 void D3D12App::Render()
 {
+    ImGui::Render();
+
     // This waits for the current frame allocator to finish executing GPU side if it
     // hasn't already. For efficiency it only creates the wait event if the current
     // fence value is below the current frame fence value

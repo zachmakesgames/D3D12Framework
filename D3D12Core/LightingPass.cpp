@@ -85,9 +85,10 @@ void LightingPass::Render(UINT frameNumber)
 
 void LightingPass::PostRender(UINT frameNumber)
 {
-    auto cmdList = Dx12Device::GetCommandList();
+    // We're tacking on a GUI pass after this so we'll wait to transition until the post render of the GUI pass
+    /*auto cmdList = Dx12Device::GetCommandList();
 
     CD3DX12_RESOURCE_BARRIER renderTargetToPresent = CD3DX12_RESOURCE_BARRIER::Transition(Dx12Device::GetCurrentBackBuffer(),
         D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-    cmdList->ResourceBarrier(1, &renderTargetToPresent);
+    cmdList->ResourceBarrier(1, &renderTargetToPresent);*/
 }

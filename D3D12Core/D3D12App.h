@@ -11,6 +11,7 @@
 #include "ForwardPass.h"
 #include "GBufferPass.h"
 #include "LightingPass.h"
+#include "GuiPass.h"
 #include "Renderer/AppConstants.h"
 #include "InputState.h"
 #include "Camera.h"
@@ -85,5 +86,7 @@ private:
 	float mframeTimeAverage = 0;
 
 	bool mInited = false;
+
+	bool mShowImGuiDemo = true;
 };
 

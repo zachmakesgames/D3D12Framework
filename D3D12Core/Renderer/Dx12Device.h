@@ -71,7 +71,7 @@ public:
 	static ResourceViewHandle CreateShaderResourceView(ID3D12Resource* resource, D3D12_SHADER_RESOURCE_VIEW_DESC* viewDesc);
 	static ResourceViewHandle CreateUnorderedAccessView(ID3D12Resource* resource, ID3D12Resource* counterResource, D3D12_UNORDERED_ACCESS_VIEW_DESC* viewDesc);
 
-	static const std::array<ID3D12DescriptorHeap*, 3> GetDescriptorHeaps();
+	static const std::array<ID3D12DescriptorHeap*, 4> GetDescriptorHeaps();
 
 	static GBuffer* GetGBuffer();
 

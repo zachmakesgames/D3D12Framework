@@ -649,9 +649,12 @@ ResourceViewHandle Dx12Device::GetNextCbvSrvUavDescriptorHandle()
 	return outHandle;
 }
 
-const std::array<ID3D12DescriptorHeap*, 3> Dx12Device::GetDescriptorHeaps()
+const std::array<ID3D12DescriptorHeap*, 4> Dx12Device::GetDescriptorHeaps()
 {
-	return { sDevice->mRtvHeap.Get(), sDevice->mDsvHeap.Get(), sDevice->mCbvSrvUavHeap.Get()};
+	return { sDevice->mRtvHeap.Get(), 
+		sDevice->mDsvHeap.Get(), 
+		sDevice->mCbvSrvUavHeap.Get(), 
+		sDevice->mImGuiCbvSrvHeap.Get()};
 }
 
 void Dx12Device::InitGBuffer()
