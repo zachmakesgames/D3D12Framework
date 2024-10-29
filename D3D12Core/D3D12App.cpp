@@ -289,14 +289,13 @@ void D3D12App::Update()
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
 
-    /*ImGui::Begin("Hello, world!");
-    ImGui::Text("Testing 1 2 3");
-    ImGui::End();*/
 
-    if (mShowImGuiDemo)
-    {
-        ImGui::ShowDemoWindow(&mShowImGuiDemo);
-    }
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::Begin("Hello, world!");
+    ImGui::SetWindowFontScale(2.f);
+    ImGui::Text("Testing 1 2 3");
+
+    ImGui::End();
 
     mInputState.PollKeyboard();
     mInputState.PollMouse(mWindow);
@@ -308,68 +307,75 @@ void D3D12App::Update()
     float dt = mFrameDuration.count();
     float cameraSpeed = 0.1;
 
-    DirectX::XMFLOAT3 cameraForward = mCamera.GetForwardVector();
-    DirectX::XMFLOAT3 cameraRight = mCamera.GetRightVector();
-    DirectX::XMFLOAT3 cameraUp = mCamera.GetUpVector();
 
-    DirectX::XMVECTOR cameraForwardV = DirectX::XMLoadFloat3(&cameraForward);
-    DirectX::XMVECTOR cameraRightV = DirectX::XMLoadFloat3(&cameraRight);
-    DirectX::XMVECTOR cameraUpV = DirectX::XMLoadFloat3(&cameraUp);
+    if (!ImGui::GetIO().WantCaptureKeyboard)
+    {
+        DirectX::XMFLOAT3 cameraForward = mCamera.GetForwardVector();
+        DirectX::XMFLOAT3 cameraRight = mCamera.GetRightVector();
+        DirectX::XMFLOAT3 cameraUp = mCamera.GetUpVector();
 
-    if (mInputState.IsKeyDown("W"))
-    {
-        DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraForwardV, -1 * cameraSpeed * dt);
-        mCamera.AddPosition(cameraOffset);
-        
-    }
-    if (mInputState.IsKeyDown("S"))
-    {
-        DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraForwardV, 1 * cameraSpeed * dt);
-        mCamera.AddPosition(cameraOffset);
-    }
-    if (mInputState.IsKeyDown("D"))
-    {
+        DirectX::XMVECTOR cameraForwardV = DirectX::XMLoadFloat3(&cameraForward);
+        DirectX::XMVECTOR cameraRightV = DirectX::XMLoadFloat3(&cameraRight);
+        DirectX::XMVECTOR cameraUpV = DirectX::XMLoadFloat3(&cameraUp);
 
-        DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraRightV, -1 * cameraSpeed * dt);
-        mCamera.AddPosition(cameraOffset);
-    }
-    if (mInputState.IsKeyDown("A"))
-    {
-        DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraRightV, 1 * cameraSpeed * dt);
-        mCamera.AddPosition(cameraOffset);
-    }
-
-    if (mInputState.IsKeyDown("R"))
-    {
-        mCamera.SetPosition(DirectX::XMFLOAT3(0, 0, 0));
-        mCamera.SetYaw(0);
-        mCamera.SetPitch(0);
-    }
-
-    if (mInputState.IsKeyDown("LEFTMOUSE"))
-    {
-        POINT mousePos = mInputState.GetMouseChange();
-        if (mousePos.x != 0 || mousePos.y != 0)
+        if (mInputState.IsKeyDown("W"))
         {
-            float x = (float)mousePos.x / (float)mWidth;
-            float y = (float)mousePos.y / (float)mHeight;
+            DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraForwardV, -1 * cameraSpeed * dt);
+            mCamera.AddPosition(cameraOffset);
 
-            // The camera movement is a bit weird, if we multiply it
-            // by the frame time then it jumps wildly and randomly with
-            // only minor differences in mouse position. The problem seems
-            // to be limited by not multiplying by dt, but it can still be
-            // noticed subtly
+        }
+        if (mInputState.IsKeyDown("S"))
+        {
+            DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraForwardV, 1 * cameraSpeed * dt);
+            mCamera.AddPosition(cameraOffset);
+        }
+        if (mInputState.IsKeyDown("D"))
+        {
 
-            x = x * -1.f * 40.f;
-            y = y * -1.f * 40.f;
-            mCamera.AddPitch(DirectX::XMConvertToRadians(y));
-            mCamera.AddYaw(DirectX::XMConvertToRadians(x));
+            DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraRightV, -1 * cameraSpeed * dt);
+            mCamera.AddPosition(cameraOffset);
+        }
+        if (mInputState.IsKeyDown("A"))
+        {
+            DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraRightV, 1 * cameraSpeed * dt);
+            mCamera.AddPosition(cameraOffset);
+        }
 
-            //x = x * DirectX::XM_PI * dt * -1;
-            //y = y * DirectX::XM_PI * dt * -1;
-            //mCamera.AddPitch(y);
-            //mCamera.AddYaw(x);
+        if (mInputState.IsKeyDown("R"))
+        {
+            mCamera.SetPosition(DirectX::XMFLOAT3(0, 0, 0));
+            mCamera.SetYaw(0);
+            mCamera.SetPitch(0);
+        }
+    }
 
+    if (!ImGui::GetIO().WantCaptureMouse)
+    {
+        if (mInputState.IsKeyDown("LEFTMOUSE"))
+        {
+            POINT mousePos = mInputState.GetMouseChange();
+            if (mousePos.x != 0 || mousePos.y != 0)
+            {
+                float x = (float)mousePos.x / (float)mWidth;
+                float y = (float)mousePos.y / (float)mHeight;
+
+                // The camera movement is a bit weird, if we multiply it
+                // by the frame time then it jumps wildly and randomly with
+                // only minor differences in mouse position. The problem seems
+                // to be limited by not multiplying by dt, but it can still be
+                // noticed subtly
+
+                x = x * -1.f * 40.f;
+                y = y * -1.f * 40.f;
+                mCamera.AddPitch(DirectX::XMConvertToRadians(y));
+                mCamera.AddYaw(DirectX::XMConvertToRadians(x));
+
+                //x = x * DirectX::XM_PI * dt * -1;
+                //y = y * DirectX::XM_PI * dt * -1;
+                //mCamera.AddPitch(y);
+                //mCamera.AddYaw(x);
+
+            }
         }
     }
 

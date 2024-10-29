@@ -17,7 +17,6 @@
 #include "Camera.h"
 #include "Scene.h"
 
-
 class __declspec(dllexport) D3D12App
 {
 public:

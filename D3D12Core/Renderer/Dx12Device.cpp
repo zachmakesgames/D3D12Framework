@@ -319,11 +319,14 @@ void Dx12Device::InitSwapchain(HWND window, int swapchainWidth, int swapchainHei
 		swapchainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 		swapchainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
-		ThrowIfFailed(sDevice->mDxgiFactory->CreateSwapChain(
+
+		HRESULT hr =(sDevice->mDxgiFactory->CreateSwapChain(
 			sDevice->mCommandQueue.Get(),
 			&swapchainDesc,
 			sDevice->mSwapChain.GetAddressOf()
 		));
+
+		ThrowIfFailed(hr)
 
 		// Handle the GBuffer resources while we're at it
 		sDevice->InitGBuffer();
@@ -819,6 +822,11 @@ void Dx12Device::DestroyResources()
 	// Clean up our blocks on the floor
 
 	HardFlushCommandQueue();
+
+	ImGui_ImplDX12_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
+
 	mGBuffer.Destroy();
 
 	for (int i = 0; i < mSwapChainBufferCount; ++i)
@@ -860,4 +868,26 @@ void Dx12Device::InitImGuiInternal()
 		mImGuiCbvSrvHeap->GetCPUDescriptorHandleForHeapStart(),
 		mImGuiCbvSrvHeap->GetGPUDescriptorHandleForHeapStart());
 
+	mImGuiInited = true;
+
+}
+
+bool Dx12Device::IsImGuiInited()
+{
+	if (sDevice != nullptr)
+	{
+		return sDevice->mImGuiInited;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+LRESULT CALLBACK Dx12Device::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	if (sDevice != nullptr)
+	{
+		return sDevice->WndProcPrivate(hWnd, message, wParam, lParam);
+	}
 }

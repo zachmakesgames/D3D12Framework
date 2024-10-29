@@ -21,6 +21,7 @@
 #include "imgui_impl_dx12.h"
 #include "imgui_impl_win32.h"
 
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 class __declspec(dllexport) Dx12Device
 {
@@ -80,7 +81,10 @@ public:
 	static void Resize(int width, int height);
 
 	static void InitImGui();
-	
+
+	static bool IsImGuiInited();
+
+	static inline LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 private:
 	Dx12Device();
@@ -94,6 +98,24 @@ private:
 	void BuildGBufferDescriptors();
 	void DestroyResources();
 	void InitImGuiInternal();
+
+
+	inline LRESULT CALLBACK WndProcPrivate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+	{
+		//return DefWindowProc(hWnd, message, wParam, lParam);
+		if (Dx12Device::IsImGuiInited() && ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+
+
+	bool mImGuiInited = false;
 
 
 	static const int mSwapChainBufferCount = 3;

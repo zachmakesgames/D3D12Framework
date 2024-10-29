@@ -112,12 +112,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 //
 ATOM MyRegisterClass(HINSTANCE hInstance)
 {
-    WNDCLASSEXW wcex;
+    WNDCLASSEXW wcex = {0};
 
     wcex.cbSize = sizeof(WNDCLASSEX);
 
     wcex.style          = CS_HREDRAW | CS_VREDRAW;
     wcex.lpfnWndProc    = WndProc;
+    //wcex.lpfnWndProc = Dx12Device::WndProc;
     wcex.cbClsExtra     = 0;
     wcex.cbWndExtra     = 0;
     wcex.hInstance      = hInstance;
@@ -153,7 +154,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, HWND* hWnd)
    *hWnd = CreateWindowEx(WS_EX_NOREDIRECTIONBITMAP, szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
        100, 200, r.right - r.left, r.bottom - r.top, nullptr, nullptr, hInstance, nullptr);
 
-   if (!hWnd)
+   if (!*hWnd)
    {
       return FALSE;
    }
@@ -177,6 +178,10 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+
+    // Pass calls to ImGui through the device, this is definitely not the best
+    // way to handle this, but it works for now.
+    Dx12Device::WndProc(hWnd, message, wParam, lParam);
 
     switch (message)
     {

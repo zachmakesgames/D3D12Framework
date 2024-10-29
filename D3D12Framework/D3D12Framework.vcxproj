@@ -117,13 +117,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory)\..\D3D12Core;$(ProjectDir)\..\imported\imgui;$(ProjectDir)\..\imported\imgui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory)\..\D3D12Core;$(ProjectDir)\..\imported\imgui;$(ProjectDir)\..\imported\imgui\backends;$(MSBuildProjectDirectory)\packages\WinPixEventRuntime.1.0.240308001\Include\WinPixEventRuntime;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>D3D12Renderer.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(LocalDebuggerWorkingDirectory);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(LocalDebuggerWorkingDirectory);$(MSBuildProjectDirectory)\packages\WinPixEventRuntime.1.0.240308001\Bin\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -134,7 +134,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory)\..\D3D12Core;$(ProjectDir)\..\imported\imgui;$(ProjectDir)\..\imported\imgui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory)\..\D3D12Core;$(ProjectDir)\..\imported\imgui;$(ProjectDir)\..\imported\imgui\backends;$(MSBuildProjectDirectory)\packages\WinPixEventRuntime.1.0.240308001\Include\WinPixEventRuntime;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -142,7 +142,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>D3D12Renderer.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(LocalDebuggerWorkingDirectory);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(LocalDebuggerWorkingDirectory);$(MSBuildProjectDirectory)\packages\WinPixEventRuntime.1.0.240308001\Bin\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

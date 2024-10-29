@@ -4,6 +4,9 @@ void LightingPass::PreRender(UINT frameNumber)
 {
     auto cmdList = Dx12Device::GetCommandList();
 
+    PIXBeginEvent(cmdList.Get(), 0, "Lighting");
+    PIXBeginEvent(cmdList.Get(), 0, "PreRender");
+
     UINT bufferNumber = Dx12Device::FrameNumToBufferNum(frameNumber);
 
     GBuffer* gBuffer = nullptr;
@@ -58,12 +61,16 @@ void LightingPass::PreRender(UINT frameNumber)
     cmdList->SetGraphicsRootDescriptorTable(0, gBuffer->GetGpuSrvHandle());
 
     cmdList->SetPipelineState(mResourceGroup->mPSOs["deferredLightingPSO"].Get());
+
+    PIXEndEvent(cmdList.Get());
 }
 
 void LightingPass::Render(UINT frameNumber)
 {
     auto cmdList = Dx12Device::GetCommandList();
     UINT bufferNum = Dx12Device::FrameNumToBufferNum(frameNumber);
+
+    PIXBeginEvent(cmdList.Get(), 0, "Render");
 
     //for (RenderObject* ref : mRenderObjectRefs)
     //{
@@ -81,10 +88,17 @@ void LightingPass::Render(UINT frameNumber)
         UINT count = mesh->mVertexCount;
         cmdList->DrawInstanced(count, 1, 0, 0);
     //}
+
+        PIXEndEvent(cmdList.Get());
+        PIXEndEvent(cmdList.Get());
 }
 
 void LightingPass::PostRender(UINT frameNumber)
 {
+    // If we end up putting something here and want to add a PIX marker, we need to remove one of the PIXEndEvent
+    // calls from the Render function and place it at the end of this function. Otherwise they wont be in the
+    // correct order and the pix runtime will freak out
+
     // We're tacking on a GUI pass after this so we'll wait to transition until the post render of the GUI pass
     /*auto cmdList = Dx12Device::GetCommandList();
 
