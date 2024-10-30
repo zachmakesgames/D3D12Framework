@@ -13,6 +13,7 @@
 #include "Renderer/Texture.h"
 #include "Renderer/ConstantBufferStructs.h"
 #include "D3D12App.h"
+#include <mutex>
 
 extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 614; }
 extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = u8".\\D3D12\\"; }
@@ -34,6 +35,8 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 HANDLE threadHandle;
 D3D12App* gApp;
 HWND mhWnd;
+
+std::mutex gImGuiIoMutex;
 
 DWORD WINAPI RunAppThread(LPVOID lpParam)
 {
@@ -224,7 +227,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 if (gApp != nullptr && gApp->IsInited())
                 {
                     RECT windowSize = {};
-                    if (GetWindowRect(mhWnd, &windowSize))
+                    //if (GetWindowRect(mhWnd, &windowSize))
+                    if(GetClientRect(mhWnd, &windowSize))
                     {
                         UINT width = windowSize.right - windowSize.left;
                         UINT height = windowSize.bottom - windowSize.top;
@@ -241,7 +245,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             if (gApp != nullptr)
             {
                 RECT windowSize = {};
-                if (GetWindowRect(mhWnd, &windowSize))
+                //if (GetWindowRect(mhWnd, &windowSize))
+                if (GetClientRect(mhWnd, &windowSize))
                 {
                     UINT width = windowSize.right - windowSize.left;
                     UINT height = windowSize.bottom - windowSize.top;

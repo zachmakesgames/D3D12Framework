@@ -891,3 +891,11 @@ LRESULT CALLBACK Dx12Device::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
 		return sDevice->WndProcPrivate(hWnd, message, wParam, lParam);
 	}
 }
+
+std::recursive_mutex* Dx12Device::GetImGuiIoMutex()
+{
+	if (sDevice != nullptr)
+	{
+		return &sDevice->mImGuiIoMutex;
+	}
+}

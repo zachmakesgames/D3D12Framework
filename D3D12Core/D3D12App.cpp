@@ -287,15 +287,29 @@ void D3D12App::Update()
 
     ImGui_ImplDX12_NewFrame();
     ImGui_ImplWin32_NewFrame();
+
+    // Need to wrap this in a mutex lock since we're running our render thread
+    // on a separate thread from the windows message pump. Things get a little
+    // non-newtonian if we don't (and I mean we get random assertions)
+    Dx12Device::GetImGuiIoMutex()->lock();
     ImGui::NewFrame();
+    Dx12Device::GetImGuiIoMutex()->unlock();
 
 
-    ImGui::SetNextWindowPos(ImVec2(0, 0));
-    ImGui::Begin("Hello, world!");
+
+    ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_FirstUseEver);
+
+    std::string windowSize = "";
+    windowSize += std::to_string(Dx12Device::GetViewportSize().right);
+    windowSize += "x";
+    windowSize += std::to_string(Dx12Device::GetViewportSize().bottom);
+
+    ImGui::Begin("Window size debug");
     ImGui::SetWindowFontScale(2.f);
-    ImGui::Text("Testing 1 2 3");
-
+    ImGui::Text("Back buffer dimensions:");
+    ImGui::Text(windowSize.c_str());
     ImGui::End();
+
 
     mInputState.PollKeyboard();
     mInputState.PollMouse(mWindow);

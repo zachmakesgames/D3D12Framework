@@ -20,6 +20,7 @@
 #include "imgui.h"
 #include "imgui_impl_dx12.h"
 #include "imgui_impl_win32.h"
+#include <mutex>
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -86,6 +87,9 @@ public:
 
 	static inline LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
+	static std::recursive_mutex* GetImGuiIoMutex();
+
+
 private:
 	Dx12Device();
 	void ResizeSwapchain(int swapchainWidth, int swapchainHeight);
@@ -102,18 +106,21 @@ private:
 
 	inline LRESULT CALLBACK WndProcPrivate(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
-		//return DefWindowProc(hWnd, message, wParam, lParam);
-		if (Dx12Device::IsImGuiInited() && ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+
+		bool returnValue = false;
+
+		// Need to wrap this in a mutex lock since this function will be called from a separate
+		// thread than the render thread.
+		mImGuiIoMutex.lock();
+		returnValue = Dx12Device::IsImGuiInited() && ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam);
+		mImGuiIoMutex.unlock();
+
+		return returnValue;
+
 	}
 
-
+	// This needs to be a recursive_mutex to make WndProcPrivate re-entrant safe
+	std::recursive_mutex mImGuiIoMutex;
 
 	bool mImGuiInited = false;
 
