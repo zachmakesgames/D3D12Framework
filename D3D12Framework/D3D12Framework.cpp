@@ -13,6 +13,7 @@
 #include "Renderer/Texture.h"
 #include "Renderer/ConstantBufferStructs.h"
 #include "D3D12App.h"
+#include <mutex>
 
 extern "C" { __declspec(dllexport) extern const UINT D3D12SDKVersion = 614; }
 extern "C" { __declspec(dllexport) extern const char* D3D12SDKPath = u8".\\D3D12\\"; }
@@ -34,6 +35,8 @@ INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 HANDLE threadHandle;
 D3D12App* gApp;
 HWND mhWnd;
+
+std::mutex gImGuiIoMutex;
 
 DWORD WINAPI RunAppThread(LPVOID lpParam)
 {
@@ -112,12 +115,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 //
 ATOM MyRegisterClass(HINSTANCE hInstance)
 {
-    WNDCLASSEXW wcex;
+    WNDCLASSEXW wcex = {0};
 
     wcex.cbSize = sizeof(WNDCLASSEX);
 
     wcex.style          = CS_HREDRAW | CS_VREDRAW;
     wcex.lpfnWndProc    = WndProc;
+    //wcex.lpfnWndProc = Dx12Device::WndProc;
     wcex.cbClsExtra     = 0;
     wcex.cbWndExtra     = 0;
     wcex.hInstance      = hInstance;
@@ -153,7 +157,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, HWND* hWnd)
    *hWnd = CreateWindowEx(WS_EX_NOREDIRECTIONBITMAP, szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
        100, 200, r.right - r.left, r.bottom - r.top, nullptr, nullptr, hInstance, nullptr);
 
-   if (!hWnd)
+   if (!*hWnd)
    {
       return FALSE;
    }
@@ -164,6 +168,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, HWND* hWnd)
    return TRUE;
 }
 
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 //
 //  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
 //
@@ -176,6 +181,11 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow, HWND* hWnd)
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+
+    // Pass calls to ImGui through the device, this is definitely not the best
+    // way to handle this, but it works for now.
+    Dx12Device::WndProc(hWnd, message, wParam, lParam);
+
     switch (message)
     {
     case WM_COMMAND:
@@ -217,7 +227,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 if (gApp != nullptr && gApp->IsInited())
                 {
                     RECT windowSize = {};
-                    if (GetWindowRect(mhWnd, &windowSize))
+                    //if (GetWindowRect(mhWnd, &windowSize))
+                    if(GetClientRect(mhWnd, &windowSize))
                     {
                         UINT width = windowSize.right - windowSize.left;
                         UINT height = windowSize.bottom - windowSize.top;
@@ -234,7 +245,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             if (gApp != nullptr)
             {
                 RECT windowSize = {};
-                if (GetWindowRect(mhWnd, &windowSize))
+                //if (GetWindowRect(mhWnd, &windowSize))
+                if (GetClientRect(mhWnd, &windowSize))
                 {
                     UINT width = windowSize.right - windowSize.left;
                     UINT height = windowSize.bottom - windowSize.top;

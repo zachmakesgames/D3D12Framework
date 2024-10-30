@@ -15,7 +15,8 @@ DirectX::XMFLOAT4X4 Camera::GetViewMatrix()
 
 	DirectX::XMMATRIX viewMatrix = DirectX::XMMatrixMultiply(translation, rotation);
 
-	DirectX::XMStoreFloat4x4(&mViewMatrix, DirectX::XMMatrixTranspose(viewMatrix));
+	//DirectX::XMStoreFloat4x4(&mViewMatrix, DirectX::XMMatrixTranspose(viewMatrix));
+	DirectX::XMStoreFloat4x4(&mViewMatrix, viewMatrix);
 
 	return mViewMatrix;
 }
@@ -69,9 +70,10 @@ void Camera::AddPitch(float pitch)
 
 DirectX::XMFLOAT3 Camera::GetForwardVector()
 {
-	float zx = mViewMatrix._31;
-	float zy = mViewMatrix._32;
+	float zx = mViewMatrix._13;
+	float zy = mViewMatrix._23;
 	float zz = mViewMatrix._33;
+
 
 	return DirectX::XMFLOAT3(zx, zy, zz);
 }
@@ -79,17 +81,19 @@ DirectX::XMFLOAT3 Camera::GetForwardVector()
 DirectX::XMFLOAT3 Camera::GetRightVector()
 {
 	float xx = mViewMatrix._11;
-	float xy = mViewMatrix._12;
-	float xz = mViewMatrix._13;
+	float xy = mViewMatrix._21;
+	float xz = mViewMatrix._31;
 
 	return DirectX::XMFLOAT3(xx, xy, xz);
 }
 
 DirectX::XMFLOAT3 Camera::GetUpVector()
 {
-	float yx = mViewMatrix._21;
+	float yx = mViewMatrix._12;
 	float yy = mViewMatrix._22;
-	float yz = mViewMatrix._23;
+	float yz = mViewMatrix._32;
+
+	
 
 	return DirectX::XMFLOAT3(yx, yy, yz);
 }

@@ -3,9 +3,13 @@
 
 void GBufferPass::PreRender(UINT frameNumber)
 {
+
     auto cmdList = Dx12Device::GetCommandList();
     GBuffer* gBuffer = nullptr;
     gBuffer = Dx12Device::GetGBuffer();
+
+    PIXBeginEvent(cmdList.Get(), 0, "GBuffer");
+    PIXBeginEvent(cmdList.Get(), 0, "PreRender");
 
     UINT bufferNumber = Dx12Device::FrameNumToBufferNum(frameNumber);
 
@@ -71,12 +75,16 @@ void GBufferPass::PreRender(UINT frameNumber)
     cmdList->SetGraphicsRootConstantBufferView(0, mConstants->GetResourceForFrame(bufferNumber)->GetGPUVirtualAddress());
 
     cmdList->SetPipelineState(mResourceGroup->mPSOs["deferredPSO"].Get());
+
+    PIXEndEvent(cmdList.Get());
 }
 
 void GBufferPass::Render(UINT frameNumber)
 {
     auto cmdList = Dx12Device::GetCommandList();
     UINT bufferNum = Dx12Device::FrameNumToBufferNum(frameNumber);
+
+    PIXBeginEvent(cmdList.Get(), 0, "Render");
 
     for (RenderObject* ref : mRenderObjectRefs)
     {
@@ -111,6 +119,8 @@ void GBufferPass::Render(UINT frameNumber)
         UINT count = mesh->mVertexCount;
         cmdList->DrawInstanced(count, ref->mInstanceCount, 0, 0);
     }
+
+    PIXEndEvent(cmdList.Get());
 }
 
 void GBufferPass::PostRender(UINT frameNumber)
@@ -118,6 +128,8 @@ void GBufferPass::PostRender(UINT frameNumber)
     auto cmdList = Dx12Device::GetCommandList();
     GBuffer* gBuffer = nullptr;
     gBuffer = Dx12Device::GetGBuffer();
+
+    PIXBeginEvent(cmdList.Get(), 0, "PostRender");
 
     // Transition the GBuffer resources
     CD3DX12_RESOURCE_BARRIER rtvTransitions[6] =
@@ -130,4 +142,6 @@ void GBufferPass::PostRender(UINT frameNumber)
         CD3DX12_RESOURCE_BARRIER::Transition(gBuffer->GetResource(5), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_UNORDERED_ACCESS),
     };
     cmdList->ResourceBarrier(6, rtvTransitions);
+    PIXEndEvent(cmdList.Get());
+    PIXEndEvent(cmdList.Get());
 }

@@ -35,11 +35,11 @@ VertexOut vsMain(VertexIn vIn)
 {
     VertexOut vOut = (VertexOut)0.0f;
 
-    float4x4 MV = mul(worldTransform, viewMat);
+    float4x4 MV = mul(viewMat, worldTransform);
 
-    float4x4 MVP = mul(MV, projMat);
+    float4x4 MVP = mul(projMat, MV);
 
-    float4 newVert = mul(float4(vIn.Pos, 1.f), MVP);
+    float4 newVert = mul(MVP, float4(vIn.Pos, 1.f));
 
     vOut.Pos = newVert;
     vOut.Tex = vIn.Tex;

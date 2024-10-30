@@ -115,6 +115,14 @@ Dx12Device::Dx12Device()
 
 	ThrowIfFailed(mD3dDevice->CreateDescriptorHeap(&cbvSrvUavHeapDesc, IID_PPV_ARGS(mCbvSrvUavHeap.GetAddressOf())));
 
+	D3D12_DESCRIPTOR_HEAP_DESC imGuiCbvSrvUavHeapDesc = {};
+	imGuiCbvSrvUavHeapDesc.NumDescriptors = 256;
+	imGuiCbvSrvUavHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	imGuiCbvSrvUavHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	imGuiCbvSrvUavHeapDesc.NodeMask = 0;
+
+	ThrowIfFailed(mD3dDevice->CreateDescriptorHeap(&imGuiCbvSrvUavHeapDesc, IID_PPV_ARGS(mImGuiCbvSrvHeap.GetAddressOf())));
+
 	// Set all the fence values to 0
 	memset(mFenceValues, 0x00, sizeof(UINT64)* mSwapChainBufferCount);
 }
@@ -289,6 +297,7 @@ void Dx12Device::InitSwapchain(HWND window, int swapchainWidth, int swapchainHei
 	{
 		sDevice->mSwapchainWidth = swapchainWidth;
 		sDevice->mSwapchainHeight = swapchainHeight;
+		sDevice->mWindow = window;
 
 		// Build the swap chain object
 		sDevice->mSwapChain.Reset();
@@ -310,11 +319,14 @@ void Dx12Device::InitSwapchain(HWND window, int swapchainWidth, int swapchainHei
 		swapchainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 		swapchainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
-		ThrowIfFailed(sDevice->mDxgiFactory->CreateSwapChain(
+
+		HRESULT hr =(sDevice->mDxgiFactory->CreateSwapChain(
 			sDevice->mCommandQueue.Get(),
 			&swapchainDesc,
 			sDevice->mSwapChain.GetAddressOf()
 		));
+
+		ThrowIfFailed(hr)
 
 		// Handle the GBuffer resources while we're at it
 		sDevice->InitGBuffer();
@@ -640,9 +652,12 @@ ResourceViewHandle Dx12Device::GetNextCbvSrvUavDescriptorHandle()
 	return outHandle;
 }
 
-const std::array<ID3D12DescriptorHeap*, 3> Dx12Device::GetDescriptorHeaps()
+const std::array<ID3D12DescriptorHeap*, 4> Dx12Device::GetDescriptorHeaps()
 {
-	return { sDevice->mRtvHeap.Get(), sDevice->mDsvHeap.Get(), sDevice->mCbvSrvUavHeap.Get()};
+	return { sDevice->mRtvHeap.Get(), 
+		sDevice->mDsvHeap.Get(), 
+		sDevice->mCbvSrvUavHeap.Get(), 
+		sDevice->mImGuiCbvSrvHeap.Get()};
 }
 
 void Dx12Device::InitGBuffer()
@@ -807,6 +822,11 @@ void Dx12Device::DestroyResources()
 	// Clean up our blocks on the floor
 
 	HardFlushCommandQueue();
+
+	ImGui_ImplDX12_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
+
 	mGBuffer.Destroy();
 
 	for (int i = 0; i < mSwapChainBufferCount; ++i)
@@ -825,4 +845,57 @@ void Dx12Device::DestroyResources()
 	mSwapChain.Reset();
 	mD3dDevice.Reset();
 	mDxgiFactory.Reset();
+}
+
+void Dx12Device::InitImGui()
+{
+	if (sDevice != nullptr)
+	{
+		sDevice->InitImGuiInternal();
+	}
+}
+
+void Dx12Device::InitImGuiInternal()
+{
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+	ImGui_ImplWin32_Init(mWindow);
+	ImGui_ImplDX12_Init(mD3dDevice.Get(), mSwapChainBufferCount,
+		mBackBufferFormat, mImGuiCbvSrvHeap.Get(),
+		mImGuiCbvSrvHeap->GetCPUDescriptorHandleForHeapStart(),
+		mImGuiCbvSrvHeap->GetGPUDescriptorHandleForHeapStart());
+
+	mImGuiInited = true;
+
+}
+
+bool Dx12Device::IsImGuiInited()
+{
+	if (sDevice != nullptr)
+	{
+		return sDevice->mImGuiInited;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+LRESULT CALLBACK Dx12Device::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	if (sDevice != nullptr)
+	{
+		return sDevice->WndProcPrivate(hWnd, message, wParam, lParam);
+	}
+}
+
+std::recursive_mutex* Dx12Device::GetImGuiIoMutex()
+{
+	if (sDevice != nullptr)
+	{
+		return &sDevice->mImGuiIoMutex;
+	}
 }

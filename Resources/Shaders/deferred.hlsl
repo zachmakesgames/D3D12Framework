@@ -59,18 +59,24 @@ VertexOut vsMain(VertexIn vIn)
         transform = worldTransform;
     }
 
-    float4x4 MV = mul(transform, viewMat);
+    // float4x4 MV = mul(transform, viewMat);
 
-    float4x4 MVP = mul(MV, projMat);
+    // float4x4 MVP = mul(MV, projMat);
 
-    float4 newVert = mul(float4(vIn.Pos, 1.f), MVP);
+    // float4 newVert = mul(float4(vIn.Pos, 1.f), MVP);
 
+    float4x4 MV = mul(viewMat, transform);
+    float4x4 MVP = mul(projMat, MV);
+    float4 newVert = mul(MVP, float4(vIn.Pos, 1.f));
 
-
-    float4 posW = mul(float4(vIn.Pos, 1.0f), transform);
+    //float4 posW = mul(float4(vIn.Pos, 1.0f), transform);
+    float4 posW = mul(transform, float4(vIn.Pos, 1.0f));
+    
+    
     vOut.PosL = posW.xyz;
 
-    vOut.Norm = mul(vIn.Norm, (float3x3) transform);
+    //vOut.Norm = mul(vIn.Norm, (float3x3) transform);
+    vOut.Norm = mul((float3x3) transform, vIn.Norm);
     //vOut.Norm = vIn.Norm;
 
     vOut.PosH = newVert;

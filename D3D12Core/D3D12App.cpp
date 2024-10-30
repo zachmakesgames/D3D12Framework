@@ -11,6 +11,8 @@ void D3D12App::Init()
 	Dx12Device::Create();
 	Dx12Device::InitSwapchain(mWindow, mWidth, mHeight, mWindowed);
 
+    Dx12Device::InitImGui();
+
     // Reset the command list for resource uploads
     auto cmdListAlloc = Dx12Device::GetCurrentFrameAllocator();
     auto cmdList = Dx12Device::GetCommandList();
@@ -55,7 +57,9 @@ void D3D12App::Init()
         DirectX::XMMATRIX offsetMat = DirectX::XMMatrixTranslation(x, y, z);
 
         DirectX::XMFLOAT4X4 offsetMat4;
-        DirectX::XMStoreFloat4x4(&offsetMat4, DirectX::XMMatrixTranspose(offsetMat));
+        //DirectX::XMStoreFloat4x4(&offsetMat4, DirectX::XMMatrixTranspose(offsetMat));
+        DirectX::XMStoreFloat4x4(&offsetMat4, offsetMat);
+
 
         mResourceGroup.mObjects["d20Inst"]->mInstanceValues[i].instanceTransform = offsetMat4;
     }
@@ -86,10 +90,13 @@ void D3D12App::Init()
     mPasses["deferredLightingPass"] = new LightingPass(&mResourceGroup, &mConstants);
     mPasses["deferredLightingPass"]->mPassName = "Deferred lighting pass";
 
+    mPasses["guiPass"] = new GuiPass(&mResourceGroup, &mConstants);
+    mPasses["guiPass"]->mPassName = "GUI Pass";
+
     //mPassGraph.AddPass(mPasses["mainPass"]);          // This would enable forward rendering with no lighting
     mPassGraph.AddPass(mPasses["deferredPass"]);        // These enable deferred rendering with lighting
     mPassGraph.AddPass(mPasses["deferredLightingPass"]);
-
+    mPassGraph.AddPass(mPasses["guiPass"]);
 
     DirectX::XMMATRIX ident = DirectX::XMMatrixIdentity();
     DirectX::XMFLOAT4X4 identF;
@@ -99,7 +106,8 @@ void D3D12App::Init()
     DirectX::XMFLOAT4X4 projection = identF;
     DirectX::XMMATRIX projMat = DirectX::XMMatrixPerspectiveFovLH(0.25f * DirectX::XM_PI, 300.f / 300.f, 1.0f, 1000.0f);
 
-    DirectX::XMStoreFloat4x4(&projection, XMMatrixTranspose(projMat));
+    //DirectX::XMStoreFloat4x4(&projection, XMMatrixTranspose(projMat));
+    DirectX::XMStoreFloat4x4(&projection, projMat);
 
     mConstants.mWorldConstants.mProjMat = projection;
     mConstants.mWorldConstants.mViewMat = identF;
@@ -118,14 +126,18 @@ void D3D12App::Init()
 
     DirectX::XMMATRIX transform = DirectX::XMMatrixMultiply(rot, translation);
     DirectX::XMFLOAT4X4 translationFloat;
-    DirectX::XMStoreFloat4x4(&translationFloat, XMMatrixTranspose(transform));
+    //DirectX::XMStoreFloat4x4(&translationFloat, XMMatrixTranspose(transform));
+    DirectX::XMStoreFloat4x4(&translationFloat, transform);
+
 
     mResourceGroup.mObjects["box"]->mConstants.worldTransform = translationFloat;
 
     DirectX::XMMATRIX translation2 = DirectX::XMMatrixTranslation(-5, 0, 15);
     DirectX::XMMATRIX transform2 = DirectX::XMMatrixMultiply(rot, translation2);
     DirectX::XMFLOAT4X4 translationFloat2;
-    DirectX::XMStoreFloat4x4(&translationFloat2, XMMatrixTranspose(transform2));
+    //DirectX::XMStoreFloat4x4(&translationFloat2, XMMatrixTranspose(transform2));
+    DirectX::XMStoreFloat4x4(&translationFloat2, transform2);
+
     mResourceGroup.mObjects["box2"]->mConstants.worldTransform = translationFloat2;
 
 
@@ -272,6 +284,33 @@ void D3D12App::CreatePSOs()
 
 void D3D12App::Update()
 {
+
+    ImGui_ImplDX12_NewFrame();
+    ImGui_ImplWin32_NewFrame();
+
+    // Need to wrap this in a mutex lock since we're running our render thread
+    // on a separate thread from the windows message pump. Things get a little
+    // non-newtonian if we don't (and I mean we get random assertions)
+    Dx12Device::GetImGuiIoMutex()->lock();
+    ImGui::NewFrame();
+    Dx12Device::GetImGuiIoMutex()->unlock();
+
+
+
+    ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_FirstUseEver);
+
+    std::string windowSize = "";
+    windowSize += std::to_string(Dx12Device::GetViewportSize().right);
+    windowSize += "x";
+    windowSize += std::to_string(Dx12Device::GetViewportSize().bottom);
+
+    ImGui::Begin("Window size debug");
+    ImGui::SetWindowFontScale(2.f);
+    ImGui::Text("Back buffer dimensions:");
+    ImGui::Text(windowSize.c_str());
+    ImGui::End();
+
+
     mInputState.PollKeyboard();
     mInputState.PollMouse(mWindow);
 
@@ -282,68 +321,75 @@ void D3D12App::Update()
     float dt = mFrameDuration.count();
     float cameraSpeed = 0.1;
 
-    DirectX::XMFLOAT3 cameraForward = mCamera.GetForwardVector();
-    DirectX::XMFLOAT3 cameraRight = mCamera.GetRightVector();
-    DirectX::XMFLOAT3 cameraUp = mCamera.GetUpVector();
 
-    DirectX::XMVECTOR cameraForwardV = DirectX::XMLoadFloat3(&cameraForward);
-    DirectX::XMVECTOR cameraRightV = DirectX::XMLoadFloat3(&cameraRight);
-    DirectX::XMVECTOR cameraUpV = DirectX::XMLoadFloat3(&cameraUp);
+    if (!ImGui::GetIO().WantCaptureKeyboard)
+    {
+        DirectX::XMFLOAT3 cameraForward = mCamera.GetForwardVector();
+        DirectX::XMFLOAT3 cameraRight = mCamera.GetRightVector();
+        DirectX::XMFLOAT3 cameraUp = mCamera.GetUpVector();
 
-    if (mInputState.IsKeyDown("W"))
-    {
-        DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraForwardV, -1 * cameraSpeed * dt);
-        mCamera.AddPosition(cameraOffset);
-        
-    }
-    if (mInputState.IsKeyDown("S"))
-    {
-        DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraForwardV, 1 * cameraSpeed * dt);
-        mCamera.AddPosition(cameraOffset);
-    }
-    if (mInputState.IsKeyDown("D"))
-    {
+        DirectX::XMVECTOR cameraForwardV = DirectX::XMLoadFloat3(&cameraForward);
+        DirectX::XMVECTOR cameraRightV = DirectX::XMLoadFloat3(&cameraRight);
+        DirectX::XMVECTOR cameraUpV = DirectX::XMLoadFloat3(&cameraUp);
 
-        DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraRightV, -1 * cameraSpeed * dt);
-        mCamera.AddPosition(cameraOffset);
-    }
-    if (mInputState.IsKeyDown("A"))
-    {
-        DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraRightV, 1 * cameraSpeed * dt);
-        mCamera.AddPosition(cameraOffset);
-    }
-
-    if (mInputState.IsKeyDown("R"))
-    {
-        mCamera.SetPosition(DirectX::XMFLOAT3(0, 0, 0));
-        mCamera.SetYaw(0);
-        mCamera.SetPitch(0);
-    }
-
-    if (mInputState.IsKeyDown("LEFTMOUSE"))
-    {
-        POINT mousePos = mInputState.GetMouseChange();
-        if (mousePos.x != 0 || mousePos.y != 0)
+        if (mInputState.IsKeyDown("W"))
         {
-            float x = (float)mousePos.x / (float)mWidth;
-            float y = (float)mousePos.y / (float)mHeight;
+            DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraForwardV, -1 * cameraSpeed * dt);
+            mCamera.AddPosition(cameraOffset);
 
-            // The camera movement is a bit weird, if we multiply it
-            // by the frame time then it jumps wildly and randomly with
-            // only minor differences in mouse position. The problem seems
-            // to be limited by not multiplying by dt, but it can still be
-            // noticed subtly
+        }
+        if (mInputState.IsKeyDown("S"))
+        {
+            DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraForwardV, 1 * cameraSpeed * dt);
+            mCamera.AddPosition(cameraOffset);
+        }
+        if (mInputState.IsKeyDown("D"))
+        {
 
-            x = x * -1.f * 40.f;
-            y = y * -1.f * 40.f;
-            mCamera.AddPitch(DirectX::XMConvertToRadians(y));
-            mCamera.AddYaw(DirectX::XMConvertToRadians(x));
+            DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraRightV, -1 * cameraSpeed * dt);
+            mCamera.AddPosition(cameraOffset);
+        }
+        if (mInputState.IsKeyDown("A"))
+        {
+            DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraRightV, 1 * cameraSpeed * dt);
+            mCamera.AddPosition(cameraOffset);
+        }
 
-            //x = x * DirectX::XM_PI * dt * -1;
-            //y = y * DirectX::XM_PI * dt * -1;
-            //mCamera.AddPitch(y);
-            //mCamera.AddYaw(x);
+        if (mInputState.IsKeyDown("R"))
+        {
+            mCamera.SetPosition(DirectX::XMFLOAT3(0, 0, 0));
+            mCamera.SetYaw(0);
+            mCamera.SetPitch(0);
+        }
+    }
 
+    if (!ImGui::GetIO().WantCaptureMouse)
+    {
+        if (mInputState.IsKeyDown("LEFTMOUSE"))
+        {
+            POINT mousePos = mInputState.GetMouseChange();
+            if (mousePos.x != 0 || mousePos.y != 0)
+            {
+                float x = (float)mousePos.x / (float)mWidth;
+                float y = (float)mousePos.y / (float)mHeight;
+
+                // The camera movement is a bit weird, if we multiply it
+                // by the frame time then it jumps wildly and randomly with
+                // only minor differences in mouse position. The problem seems
+                // to be limited by not multiplying by dt, but it can still be
+                // noticed subtly
+
+                x = x * -1.f * 40.f;
+                y = y * -1.f * 40.f;
+                mCamera.AddPitch(DirectX::XMConvertToRadians(y));
+                mCamera.AddYaw(DirectX::XMConvertToRadians(x));
+
+                //x = x * DirectX::XM_PI * dt * -1;
+                //y = y * DirectX::XM_PI * dt * -1;
+                //mCamera.AddPitch(y);
+                //mCamera.AddYaw(x);
+
+            }
         }
     }
 
@@ -359,14 +405,17 @@ void D3D12App::Update()
 
     DirectX::XMMATRIX transform = DirectX::XMMatrixMultiply(rot, translation);
     DirectX::XMFLOAT4X4 translationFloat;
-    DirectX::XMStoreFloat4x4(&translationFloat, XMMatrixTranspose(transform));
+    //DirectX::XMStoreFloat4x4(&translationFloat, XMMatrixTranspose(transform));
+    DirectX::XMStoreFloat4x4(&translationFloat, transform);
 
     mResourceGroup.mObjects["box"]->mConstants.worldTransform = translationFloat;
 
     DirectX::XMMATRIX translation2 = DirectX::XMMatrixTranslation(-5, 0, 20);
     DirectX::XMMATRIX transform2 = DirectX::XMMatrixMultiply(rot, translation2);
     DirectX::XMFLOAT4X4 translationFloat2;
-    DirectX::XMStoreFloat4x4(&translationFloat2, XMMatrixTranspose(transform2));
+    //DirectX::XMStoreFloat4x4(&translationFloat2, XMMatrixTranspose(transform2));
+    DirectX::XMStoreFloat4x4(&translationFloat2, transform2);
+
     mResourceGroup.mObjects["box2"]->mConstants.worldTransform = translationFloat2;
 
     mResourceGroup.mObjects["box"]->UpdateBuffer(bufferNum);
@@ -380,7 +429,8 @@ void D3D12App::Update()
     DirectX::XMFLOAT4X4 projection;
     DirectX::XMMATRIX projMat = DirectX::XMMatrixPerspectiveFovLH(0.25f * DirectX::XM_PI, aspect, 1.0f, 1000.0f);
 
-    DirectX::XMStoreFloat4x4(&projection, XMMatrixTranspose(projMat));
+    //DirectX::XMStoreFloat4x4(&projection, XMMatrixTranspose(projMat));
+    DirectX::XMStoreFloat4x4(&projection, projMat);
 
     mConstants.mWorldConstants.mViewMat = mCamera.GetViewMatrix();
 
@@ -391,6 +441,8 @@ void D3D12App::Update()
 
 void D3D12App::Render()
 {
+    ImGui::Render();
+
     // This waits for the current frame allocator to finish executing GPU side if it
     // hasn't already. For efficiency it only creates the wait event if the current
     // fence value is below the current frame fence value

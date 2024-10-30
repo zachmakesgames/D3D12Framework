@@ -11,11 +11,11 @@
 #include "ForwardPass.h"
 #include "GBufferPass.h"
 #include "LightingPass.h"
+#include "GuiPass.h"
 #include "Renderer/AppConstants.h"
 #include "InputState.h"
 #include "Camera.h"
 #include "Scene.h"
-
 
 class __declspec(dllexport) D3D12App
 {
@@ -85,5 +85,7 @@ private:
 	float mframeTimeAverage = 0;
 
 	bool mInited = false;
+
+	bool mShowImGuiDemo = true;
 };
 
