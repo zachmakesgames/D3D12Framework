@@ -13,6 +13,7 @@ struct RenderItemConstants
 struct RenderItemInstanceValues
 {
 	DirectX::XMFLOAT4X4 instanceTransform;
+	DirectX::XMFLOAT4 instanceColor;
 };
 
 struct RenderObjectInit

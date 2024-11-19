@@ -23,8 +23,10 @@ public:
 	DirectX::XMFLOAT3 GetForwardVector();
 	DirectX::XMFLOAT3 GetRightVector();
 	DirectX::XMFLOAT3 GetUpVector();
+	DirectX::XMFLOAT3 GetCameraPosition();
 
 private:
+	void UpdateMatrix();
 	DirectX::XMFLOAT4X4 mViewMatrix;
 	DirectX::XMFLOAT3 mPosition;
 	float mYaw;

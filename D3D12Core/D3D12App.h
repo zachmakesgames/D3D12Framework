@@ -12,10 +12,13 @@
 #include "GBufferPass.h"
 #include "LightingPass.h"
 #include "GuiPass.h"
+#include "UnlitPass.h"
+#include "DebugPass.h"
 #include "Renderer/AppConstants.h"
 #include "InputState.h"
 #include "Camera.h"
 #include "Scene.h"
+#include "FrameTimer.h"
 
 class __declspec(dllexport) D3D12App
 {
@@ -76,16 +79,16 @@ private:
 
 	std::queue<DirectX::XMINT2> mResizeQueue;
 
-	std::chrono::time_point<std::chrono::high_resolution_clock> mFrameTimer = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<double, std::milli> mFrameDuration;
+	FrameTimer mFrameTimer;
 
 	InputState mInputState;
 	Camera mCamera;
 
-	float mframeTimeAverage = 0;
-
 	bool mInited = false;
 
 	bool mShowImGuiDemo = true;
+
+	DirectX::XMFLOAT4 mDebugColor = DirectX::XMFLOAT4(1, 1, 1, 1);
+	ImVec4 color;
 };
 

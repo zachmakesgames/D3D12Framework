@@ -5,11 +5,12 @@ struct cbWorld
 {
 	DirectX::XMFLOAT4X4 mViewMat;
 	DirectX::XMFLOAT4X4 mProjMat;
-	byte pad[128];
+	DirectX::XMFLOAT3 mCameraPosition;
+	//byte pad[128];
 };
 
 struct cbObject
 {
 	DirectX::XMFLOAT4X4 mWorldTransform;
-	byte pad[192];
+	//byte pad[192];
 };

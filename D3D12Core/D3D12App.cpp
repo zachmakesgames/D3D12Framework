@@ -32,19 +32,27 @@ void D3D12App::Init()
 
     RenderObjectInit boxInit = { "box", "TestPattern", false, 1 };
     RenderObjectInit d20Init = { "d20", "TestPattern", false, 1 };
+
+    RenderObjectInit gizmoInit{ "gizmoArrow", "TestPattern", true, 3 };
+    RenderObjectInit debugLineInit{ "debugLine", "TestPattern", true, 1 };
+    RenderObjectInit debugCubeInit{ "debugCube", "TestPattern", true, 2 };
     
     
     mResourceGroup.mObjects["box"] = std::make_unique<RenderObject>(boxInit);
     mResourceGroup.mObjects["box2"] = std::make_unique<RenderObject>(d20Init);
 
+    mResourceGroup.mObjects["gizmo"] = std::make_unique<RenderObject>(gizmoInit);
+    mResourceGroup.mObjects["debugLine"] = std::make_unique<RenderObject>(debugLineInit);
+    mResourceGroup.mObjects["debugCube"] = std::make_unique<RenderObject>(debugCubeInit);
+
     // Instanced rendering example with new support for instances built into 
     // RenderObject
-    RenderObjectInit d20InstInit = { "d20", "TestPattern", true, 2000 };
+    RenderObjectInit d20InstInit = { "d20", "TestPattern", true, 5000 };
     mResourceGroup.mObjects["d20Inst"] = std::make_unique<RenderObject>(d20InstInit);
 
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<> distro(-200, 200);
+    std::uniform_int_distribution<> distro(-600, 600);
 
     for (int i = 0; i < d20InstInit.instanceCount; ++i)
     {
@@ -52,22 +60,85 @@ void D3D12App::Init()
         int x = distro(gen);
         int y = distro(gen);
         int z = distro(gen);
-        //DirectX::XMFLOAT3 offset = instTransforms[i % 12];
-        //DirectX::XMMATRIX offsetMat = DirectX::XMMatrixTranslation(offset.x, offset.y, offset.z);
         DirectX::XMMATRIX offsetMat = DirectX::XMMatrixTranslation(x, y, z);
 
         DirectX::XMFLOAT4X4 offsetMat4;
-        //DirectX::XMStoreFloat4x4(&offsetMat4, DirectX::XMMatrixTranspose(offsetMat));
         DirectX::XMStoreFloat4x4(&offsetMat4, offsetMat);
 
 
         mResourceGroup.mObjects["d20Inst"]->mInstanceValues[i].instanceTransform = offsetMat4;
     }
 
+
+    // All this just to get a couple of arrows pointed in the right direction
+    // DirectX Math, what is wrong with you?
+    DirectX::XMFLOAT4 xAxis = DirectX::XMFLOAT4(1, 0, 0, 1);
+    DirectX::XMFLOAT4 zAxis = DirectX::XMFLOAT4(0, 0, 1, 1);
+
+    DirectX::XMMATRIX gizmoOffset = DirectX::XMMatrixTranslation(0, 0, 10);
+
+    DirectX::XMVECTOR xAxisVector = DirectX::XMLoadFloat4(&xAxis);
+    DirectX::XMMATRIX gizmoXRotation = DirectX::XMMatrixRotationAxis(xAxisVector, DirectX::XMConvertToRadians(90));
+
+    DirectX::XMFLOAT4X4 xAxisRotation;
+    DirectX::XMStoreFloat4x4(&xAxisRotation, gizmoXRotation);
+
+    DirectX::XMVECTOR zAxisVector = DirectX::XMLoadFloat4(&zAxis);
+    DirectX::XMMATRIX gizmoZRotation = DirectX::XMMatrixRotationAxis(zAxisVector, DirectX::XMConvertToRadians(-90));
+
+    DirectX::XMFLOAT4X4 zAxisRotation;
+    DirectX::XMStoreFloat4x4(&zAxisRotation, gizmoZRotation);
+
+    DirectX::XMMATRIX identity = DirectX::XMMatrixIdentity();
+    DirectX::XMFLOAT4X4 identity4x4;
+    DirectX::XMStoreFloat4x4(&identity4x4, identity);
+
+    DirectX::XMFLOAT4X4 gizmoOffset4x4;
+    DirectX::XMStoreFloat4x4(&gizmoOffset4x4, gizmoOffset);
+
+    DirectX::XMMATRIX scale = DirectX::XMMatrixScaling(0.5, 0.5, 0.5);
+    DirectX::XMFLOAT4X4 scale4x4;
+    DirectX::XMStoreFloat4x4(&scale4x4, scale);
+
+    DirectX::XMMATRIX translateX = DirectX::XMMatrixTranslation(5, 0, 0);
+    DirectX::XMFLOAT4X4 translateX4x4;
+    DirectX::XMStoreFloat4x4(&translateX4x4, translateX);
+
+    DirectX::XMMATRIX translateY = DirectX::XMMatrixTranslation(0, 5, 0);
+    DirectX::XMFLOAT4X4 translateY4x4;
+    DirectX::XMStoreFloat4x4(&translateY4x4, translateY);
+
+    DirectX::XMMATRIX translateZ = DirectX::XMMatrixTranslation(0, 0, 5);
+    DirectX::XMFLOAT4X4 translateZ4x4;
+    DirectX::XMStoreFloat4x4(&translateZ4x4, translateZ);
+    
+    
+    mResourceGroup.mObjects["gizmo"]->mInstanceValues[0].instanceTransform = zAxisRotation;
+    mResourceGroup.mObjects["gizmo"]->mInstanceValues[0].instanceColor = DirectX::XMFLOAT4(1, 0, 0, 1);
+    mResourceGroup.mObjects["gizmo"]->mInstanceValues[1].instanceTransform = identity4x4;
+    mResourceGroup.mObjects["gizmo"]->mInstanceValues[1].instanceColor = DirectX::XMFLOAT4(0, 1, 0, 1);
+    mResourceGroup.mObjects["gizmo"]->mInstanceValues[2].instanceTransform = xAxisRotation;
+    mResourceGroup.mObjects["gizmo"]->mInstanceValues[2].instanceColor = DirectX::XMFLOAT4(0, 0, 1, 1);
+
+    mResourceGroup.mObjects["debugLine"]->mInstanceValues[0].instanceTransform = identity4x4;
+    mResourceGroup.mObjects["debugLine"]->mInstanceValues[0].instanceColor = DirectX::XMFLOAT4(1, 1, 1, 1);
+
+    mResourceGroup.mObjects["debugCube"]->mInstanceValues[0].instanceTransform = scale4x4;
+    mResourceGroup.mObjects["debugCube"]->mInstanceValues[0].instanceColor = DirectX::XMFLOAT4(1, 148.f/255.f, 27.f/255.f, 1);
+    mResourceGroup.mObjects["debugCube"]->mInstanceValues[1].instanceTransform = scale4x4;
+    mResourceGroup.mObjects["debugCube"]->mInstanceValues[1].instanceColor = DirectX::XMFLOAT4(0, 1.f, 0.f, 1);
+
+
+
     for (int i = 0; i < Dx12Device::GetSwapchainBufferCount(); ++i)
     {
         mResourceGroup.mObjects["d20Inst"]->UpdateInstanceBuffer(i);
+        mResourceGroup.mObjects["gizmo"]->UpdateInstanceBuffer(i);
+        mResourceGroup.mObjects["debugLine"]->UpdateInstanceBuffer(i);
+        mResourceGroup.mObjects["debugCube"]->UpdateInstanceBuffer(i);
     }
+
+    
     
 
     // A basic forward rendering pass
@@ -93,24 +164,33 @@ void D3D12App::Init()
     mPasses["guiPass"] = new GuiPass(&mResourceGroup, &mConstants);
     mPasses["guiPass"]->mPassName = "GUI Pass";
 
+    mPasses["unlitPass"] = new UnlitPass(&mResourceGroup, &mConstants);
+    mPasses["unlitPass"]->mPassName = "Unlit Pass";
+
+    mPasses["debugPass"] = new DebugPass(&mResourceGroup, &mConstants);
+    mPasses["debugPass"]->mPassName = "Debug Pass";
+
+    mPasses["unlitPass"]->RegisterRenderObject(mResourceGroup.mObjects["gizmo"].get());
+    mPasses["debugPass"]->RegisterRenderObject(mResourceGroup.mObjects["debugLine"].get());
+    mPasses["debugPass"]->RegisterRenderObject(mResourceGroup.mObjects["debugCube"].get());
+
     //mPassGraph.AddPass(mPasses["mainPass"]);          // This would enable forward rendering with no lighting
     mPassGraph.AddPass(mPasses["deferredPass"]);        // These enable deferred rendering with lighting
     mPassGraph.AddPass(mPasses["deferredLightingPass"]);
+    mPassGraph.AddPass(mPasses["unlitPass"]);
+    mPassGraph.AddPass(mPasses["debugPass"]);
     mPassGraph.AddPass(mPasses["guiPass"]);
 
     DirectX::XMMATRIX ident = DirectX::XMMatrixIdentity();
     DirectX::XMFLOAT4X4 identF;
-
     DirectX::XMStoreFloat4x4(&identF, ident);
     
     DirectX::XMFLOAT4X4 projection = identF;
-    DirectX::XMMATRIX projMat = DirectX::XMMatrixPerspectiveFovLH(0.25f * DirectX::XM_PI, 300.f / 300.f, 1.0f, 1000.0f);
-
-    //DirectX::XMStoreFloat4x4(&projection, XMMatrixTranspose(projMat));
+    DirectX::XMMATRIX projMat = DirectX::XMMatrixPerspectiveFovLH(0.25f * DirectX::XM_PI, (float)mWidth / (float)mHeight, 1.0f, 1000.0f);
     DirectX::XMStoreFloat4x4(&projection, projMat);
 
     mConstants.mWorldConstants.mProjMat = projection;
-    mConstants.mWorldConstants.mViewMat = identF;
+    mConstants.mWorldConstants.mViewMat =  identF;
     
     mConstants.Init();
 
@@ -126,7 +206,6 @@ void D3D12App::Init()
 
     DirectX::XMMATRIX transform = DirectX::XMMatrixMultiply(rot, translation);
     DirectX::XMFLOAT4X4 translationFloat;
-    //DirectX::XMStoreFloat4x4(&translationFloat, XMMatrixTranspose(transform));
     DirectX::XMStoreFloat4x4(&translationFloat, transform);
 
 
@@ -135,7 +214,6 @@ void D3D12App::Init()
     DirectX::XMMATRIX translation2 = DirectX::XMMatrixTranslation(-5, 0, 15);
     DirectX::XMMATRIX transform2 = DirectX::XMMatrixMultiply(rot, translation2);
     DirectX::XMFLOAT4X4 translationFloat2;
-    //DirectX::XMStoreFloat4x4(&translationFloat2, XMMatrixTranspose(transform2));
     DirectX::XMStoreFloat4x4(&translationFloat2, transform2);
 
     mResourceGroup.mObjects["box2"]->mConstants.worldTransform = translationFloat2;
@@ -174,10 +252,11 @@ void D3D12App::CreateRootSigs()
     CD3DX12_DESCRIPTOR_RANGE gBufferSrvTable;
     gBufferSrvTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 6, 0, 0);
 
-    CD3DX12_ROOT_PARAMETER lightingRootParam[1];
-    lightingRootParam[0].InitAsDescriptorTable(1, &gBufferSrvTable, D3D12_SHADER_VISIBILITY_PIXEL);
+    CD3DX12_ROOT_PARAMETER lightingRootParam[2];
+    lightingRootParam[0].InitAsConstantBufferView(0);
+    lightingRootParam[1].InitAsDescriptorTable(1, &gBufferSrvTable, D3D12_SHADER_VISIBILITY_PIXEL);
 
-    CD3DX12_ROOT_SIGNATURE_DESC lightingRootSig(1, lightingRootParam,
+    CD3DX12_ROOT_SIGNATURE_DESC lightingRootSig(2, lightingRootParam,
         (UINT)samplers.size(), samplers.data(),
         D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
@@ -188,8 +267,11 @@ void D3D12App::CreateGeometry()
 {
     mResourceGroup.mGeometry["box"] = Mesh::LoadMeshFromObj("../../../Resources/Models/box.obj");
     mResourceGroup.mGeometry["d20"] = Mesh::LoadMeshFromObj("../../../Resources/Models/D20.obj");
+    mResourceGroup.mGeometry["gizmoArrow"] = Mesh::LoadMeshFromObj("../../../Resources/Models/YArrow.obj");
 
     mResourceGroup.mGeometry["triangle"] = Mesh::CreateMesh(sFullScreenTriangle, 3);
+    mResourceGroup.mGeometry["debugLine"] = Mesh::CreateMesh(sLine, 2);
+    mResourceGroup.mGeometry["debugCube"] = Mesh::CreateMesh(sCube, sizeof(sCube)/sizeof(Vertex));
 
 
 
@@ -233,6 +315,7 @@ void D3D12App::CreatePSOs()
         { "INSTTRANSFORM", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 16, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
         { "INSTTRANSFORM", 2, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 32, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
         { "INSTTRANSFORM", 3, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 48, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
+        { "INSTCOLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 64, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
     };
 
     D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc;
@@ -256,16 +339,25 @@ void D3D12App::CreatePSOs()
 
     mResourceGroup.mPSOs["simplePSO"] = Dx12Device::CreatePSO(&psoDesc);
 
+    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
+    
+
+    mResourceGroup.mPSOs["debugPSO"] = Dx12Device::CreatePSO(&psoDesc);
+
+    psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+
     psoDesc.pRootSignature = mResourceGroup.mRootSignatures["lightingRootSig"].Get();
     psoDesc.VS = { reinterpret_cast<BYTE*>(mResourceGroup.mShaders["deferredLightingVs"]->GetBufferPointer()), mResourceGroup.mShaders["deferredLightingVs"]->GetBufferSize() };
     psoDesc.PS = { reinterpret_cast<BYTE*>(mResourceGroup.mShaders["deferredLightingPs"]->GetBufferPointer()), mResourceGroup.mShaders["deferredLightingPs"]->GetBufferSize() };
 
+    psoDesc.DepthStencilState.DepthEnable = false;
     mResourceGroup.mPSOs["deferredLightingPSO"] = Dx12Device::CreatePSO(&psoDesc);
 
+    psoDesc.DepthStencilState.DepthEnable = true;
     psoDesc.pRootSignature = mResourceGroup.mRootSignatures["mainRootSig"].Get();
     psoDesc.VS = { reinterpret_cast<BYTE*>(mResourceGroup.mShaders["deferredVs"]->GetBufferPointer()), mResourceGroup.mShaders["deferredVs"]->GetBufferSize() };
     psoDesc.PS = { reinterpret_cast<BYTE*>(mResourceGroup.mShaders["deferredPs"]->GetBufferPointer()), mResourceGroup.mShaders["deferredPs"]->GetBufferSize() };
-
+    
 
     DXGI_FORMAT gBufferFormat = gBuffer->GetFormat();
     psoDesc.NumRenderTargets = 6;
@@ -284,6 +376,7 @@ void D3D12App::CreatePSOs()
 
 void D3D12App::Update()
 {
+    UINT bufferNum = Dx12Device::FrameNumToBufferNum(mFrameCount);
 
     ImGui_ImplDX12_NewFrame();
     ImGui_ImplWin32_NewFrame();
@@ -295,7 +388,10 @@ void D3D12App::Update()
     ImGui::NewFrame();
     Dx12Device::GetImGuiIoMutex()->unlock();
 
+    mFrameTimer.Tick();
 
+    float dt = mFrameTimer.GetFrameTime();
+    float cameraSpeed = 0.06;
 
     ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_FirstUseEver);
 
@@ -304,23 +400,68 @@ void D3D12App::Update()
     windowSize += "x";
     windowSize += std::to_string(Dx12Device::GetViewportSize().bottom);
 
-    ImGui::Begin("Window size debug");
+    std::string frameTimeStr = std::to_string(1000.f/(mFrameTimer.GetAverageFrameTime()));
+
+    std::string cameraPosStr = "";
+    cameraPosStr += std::to_string(mCamera.GetCameraPosition().x) + ", ";
+    cameraPosStr += std::to_string(mCamera.GetCameraPosition().y) + ", ";
+    cameraPosStr += std::to_string(mCamera.GetCameraPosition().z);
+
+    std::string cameraFwdStr = "";
+    cameraFwdStr += std::to_string(mCamera.GetForwardVector().x) + ", ";
+    cameraFwdStr += std::to_string(mCamera.GetForwardVector().y) + ", ";
+    cameraFwdStr += std::to_string(mCamera.GetForwardVector().z);
+
+    ImGui::Begin("Debug Info");
     ImGui::SetWindowFontScale(2.f);
     ImGui::Text("Back buffer dimensions:");
     ImGui::Text(windowSize.c_str());
+    ImGui::Text("Frame time:");
+    ImGui::Text(frameTimeStr.c_str());
+    ImGui::Text("Camera Position");
+    ImGui::Text(cameraPosStr.c_str());
+    ImGui::Text("Camera Forward:");
+    ImGui::Text(cameraFwdStr.c_str());
     ImGui::End();
-
 
     mInputState.PollKeyboard();
     mInputState.PollMouse(mWindow);
 
-    auto lastTime = mFrameTimer;
-    mFrameTimer = std::chrono::high_resolution_clock::now();
-    mFrameDuration = mFrameTimer - lastTime;
+    D3D12_RECT viewport = Dx12Device::GetViewportSize();
 
-    float dt = mFrameDuration.count();
-    float cameraSpeed = 0.1;
+    if (!ImGui::GetIO().WantCaptureMouse)
+    {
+        if (mInputState.IsKeyDown("LEFTMOUSE"))
+        {
+            POINT mousePos = mInputState.GetMouseChange();
+            if (mousePos.x != 0 || mousePos.y != 0)
+            {
+                float x = (float)mousePos.x / (float)viewport.right;
+                float y = (float)mousePos.y / (float)viewport.bottom;
 
+                // The camera movement is a bit weird, if we multiply it
+                // by the frame time then it jumps wildly and randomly with
+                // only minor differences in mouse position. The problem seems
+                // to be limited by not multiplying by dt, but it can still be
+                // noticed subtly
+
+                x = x * -1.f * 80.f;
+                y = y * -1.f * 80.f;
+                mCamera.AddPitch(DirectX::XMConvertToRadians(y));
+                mCamera.AddYaw(DirectX::XMConvertToRadians(x));
+
+                //x = x * DirectX::XM_PI * dt * -1;
+                //y = y * DirectX::XM_PI * dt * -1;
+                //mCamera.AddPitch(y);
+                //mCamera.AddYaw(x);
+
+            }
+        }
+
+       
+    }
+
+    bool doScreenSpaceProjection = false;
 
     if (!ImGui::GetIO().WantCaptureKeyboard)
     {
@@ -334,24 +475,33 @@ void D3D12App::Update()
 
         if (mInputState.IsKeyDown("W"))
         {
-            DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraForwardV, -1 * cameraSpeed * dt);
+            DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraForwardV, -1.f * cameraSpeed * dt);
             mCamera.AddPosition(cameraOffset);
 
         }
         if (mInputState.IsKeyDown("S"))
         {
-            DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraForwardV, 1 * cameraSpeed * dt);
+            DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraForwardV, 1.f * cameraSpeed * dt);
             mCamera.AddPosition(cameraOffset);
         }
         if (mInputState.IsKeyDown("D"))
         {
-
-            DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraRightV, -1 * cameraSpeed * dt);
+            DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraRightV, -1.f * cameraSpeed * dt);
             mCamera.AddPosition(cameraOffset);
         }
         if (mInputState.IsKeyDown("A"))
         {
-            DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraRightV, 1 * cameraSpeed * dt);
+            DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraRightV, 1.f * cameraSpeed * dt);
+            mCamera.AddPosition(cameraOffset);
+        }
+        if (mInputState.IsKeyDown("E"))
+        {
+            DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraUpV, -1.f * cameraSpeed * dt);
+            mCamera.AddPosition(cameraOffset);
+        }
+        if (mInputState.IsKeyDown("Q"))
+        {
+            DirectX::XMVECTOR cameraOffset = DirectX::XMVectorScale(cameraUpV, 1.f * cameraSpeed * dt);
             mCamera.AddPosition(cameraOffset);
         }
 
@@ -361,43 +511,82 @@ void D3D12App::Update()
             mCamera.SetYaw(0);
             mCamera.SetPitch(0);
         }
-    }
 
-    if (!ImGui::GetIO().WantCaptureMouse)
-    {
-        if (mInputState.IsKeyDown("LEFTMOUSE"))
+        if (mInputState.IsKeyDown("L"))
         {
-            POINT mousePos = mInputState.GetMouseChange();
-            if (mousePos.x != 0 || mousePos.y != 0)
-            {
-                float x = (float)mousePos.x / (float)mWidth;
-                float y = (float)mousePos.y / (float)mHeight;
-
-                // The camera movement is a bit weird, if we multiply it
-                // by the frame time then it jumps wildly and randomly with
-                // only minor differences in mouse position. The problem seems
-                // to be limited by not multiplying by dt, but it can still be
-                // noticed subtly
-
-                x = x * -1.f * 40.f;
-                y = y * -1.f * 40.f;
-                mCamera.AddPitch(DirectX::XMConvertToRadians(y));
-                mCamera.AddYaw(DirectX::XMConvertToRadians(x));
-
-                //x = x * DirectX::XM_PI * dt * -1;
-                //y = y * DirectX::XM_PI * dt * -1;
-                //mCamera.AddPitch(y);
-                //mCamera.AddYaw(x);
-
-            }
+            doScreenSpaceProjection = true;
         }
     }
 
-    UINT bufferNum = Dx12Device::FrameNumToBufferNum(mFrameCount);
+    float aspect = (float)viewport.right / (float)viewport.bottom;
+
+    DirectX::XMFLOAT4X4 projection;
+    DirectX::XMMATRIX projMat = DirectX::XMMatrixPerspectiveFovLH(0.25f * DirectX::XM_PI, aspect, .1f, 1000.0f);
+    DirectX::XMStoreFloat4x4(&projection, projMat);
+
+    DirectX::XMFLOAT4X4 viewMat4 = mCamera.GetViewMatrix();
+    DirectX::XMMATRIX viewMat = DirectX::XMLoadFloat4x4(&viewMat4);
+
+    DirectX::XMFLOAT4 worldSpaceMouse = DirectX::XMFLOAT4(0, 0, 0, 0);
+
+    POINT screenSpaceMouse = mInputState.GetMousePosition();
+
+    DirectX::XMFLOAT4 clipSpaceMouse = DirectX::XMFLOAT4(screenSpaceMouse.x, screenSpaceMouse.y, 1000.f, 1.f);
+    DirectX::XMVECTOR clipSpaceMouseV = DirectX::XMLoadFloat4(&clipSpaceMouse);
+
+
+    // Go from clip space to NDC, not useful now but maybe later
+    //mouse_x = (2.f * (mouse_x / (float)viewport.right)) - 1.f;
+    //mouse_y = (2.f * (mouse_y / (float)viewport.bottom)) - 1.f;
+
+    // Built in unproject requires the mouse position in clip space, not NDC
+    DirectX::XMVECTOR unproj = DirectX::XMVector3Unproject(clipSpaceMouseV, 0.f, 0.f, (float)viewport.right, (float)viewport.bottom, 0.1f, 1000.f, projMat, viewMat, DirectX::XMMatrixIdentity());
+    DirectX::XMStoreFloat4(&worldSpaceMouse, unproj);
+
+
+
+    DirectX::XMFLOAT3 cameraPos = mCamera.GetCameraPosition();
+    DirectX::XMFLOAT3 mousePos = DirectX::XMFLOAT3(worldSpaceMouse.x, worldSpaceMouse.y, worldSpaceMouse.z);
+
+
+    DirectX::XMMATRIX cubeScale = DirectX::XMMatrixScaling(0.5f, 0.5f, 0.5f);
+    DirectX::XMMATRIX cubeScale2 = DirectX::XMMatrixScaling(0.5f, 0.5f, 0.5f);
+    DirectX::XMMATRIX cubePos = DirectX::XMMatrixTranslation(cameraPos.x, cameraPos.y, cameraPos.z);
+    DirectX::XMMATRIX mouseCubePos = DirectX::XMMatrixTranslation(mousePos.x, mousePos.y, mousePos.z);
+
+    DirectX::XMMATRIX cubeTransform = DirectX::XMMatrixMultiply(cubeScale, cubePos);
+    DirectX::XMFLOAT4X4 cubeTransform4x4;
+
+    DirectX::XMMATRIX cubeTransform2 = DirectX::XMMatrixMultiply(cubeScale2, mouseCubePos);
+    DirectX::XMFLOAT4X4 cubeTransform2_4x4;
+
+    DirectX::XMStoreFloat4x4(&cubeTransform4x4, cubeTransform);
+    DirectX::XMStoreFloat4x4(&cubeTransform2_4x4, cubeTransform2);
+
+
+
+    if (doScreenSpaceProjection)
+    {
+        mResourceGroup.mObjects["debugCube"]->mInstanceValues[0].instanceTransform = cubeTransform4x4;
+        mResourceGroup.mObjects["debugCube"]->mInstanceValues[1].instanceTransform = cubeTransform2_4x4;
+        for (int i = 0; i < Dx12Device::GetSwapchainBufferCount(); ++i)
+        {
+            mResourceGroup.mObjects["debugCube"]->UpdateInstanceBuffer(i);
+        }
+
+
+        DirectX::XMFLOAT3 cameraPosx = DirectX::XMFLOAT3(cameraPos.x, cameraPos.y, cameraPos.z);
+        DirectX::XMFLOAT3 mousePosx = DirectX::XMFLOAT3(mousePos.x, mousePos.y, mousePos.z);
+
+        mResourceGroup.mGeometry["debugLine"]->mVertexData[0].position = cameraPos;
+        mResourceGroup.mGeometry["debugLine"]->mVertexData[1].position = mousePos;
+        mResourceGroup.mGeometry["debugLine"]->UpdateBuffer();
+    }
+
 
     mObjectRotation += 0.001 * dt;
 
-    DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(0, 0, 10);
+    DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(0, 20, 10);
     DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationX(0.3 * DirectX::XM_PI);
     DirectX::XMMATRIX rotation2 = DirectX::XMMatrixRotationY(mObjectRotation * DirectX::XM_PI);
 
@@ -405,7 +594,6 @@ void D3D12App::Update()
 
     DirectX::XMMATRIX transform = DirectX::XMMatrixMultiply(rot, translation);
     DirectX::XMFLOAT4X4 translationFloat;
-    //DirectX::XMStoreFloat4x4(&translationFloat, XMMatrixTranspose(transform));
     DirectX::XMStoreFloat4x4(&translationFloat, transform);
 
     mResourceGroup.mObjects["box"]->mConstants.worldTransform = translationFloat;
@@ -413,7 +601,6 @@ void D3D12App::Update()
     DirectX::XMMATRIX translation2 = DirectX::XMMatrixTranslation(-5, 0, 20);
     DirectX::XMMATRIX transform2 = DirectX::XMMatrixMultiply(rot, translation2);
     DirectX::XMFLOAT4X4 translationFloat2;
-    //DirectX::XMStoreFloat4x4(&translationFloat2, XMMatrixTranspose(transform2));
     DirectX::XMStoreFloat4x4(&translationFloat2, transform2);
 
     mResourceGroup.mObjects["box2"]->mConstants.worldTransform = translationFloat2;
@@ -422,20 +609,10 @@ void D3D12App::Update()
     mResourceGroup.mObjects["box2"]->UpdateBuffer(bufferNum);
     mConstants.UpdateBuffer(bufferNum);
 
-    D3D12_RECT viewport = Dx12Device::GetViewportSize();
-
-    float aspect = (float)viewport.right / (float)viewport.bottom;
-
-    DirectX::XMFLOAT4X4 projection;
-    DirectX::XMMATRIX projMat = DirectX::XMMatrixPerspectiveFovLH(0.25f * DirectX::XM_PI, aspect, 1.0f, 1000.0f);
-
-    //DirectX::XMStoreFloat4x4(&projection, XMMatrixTranspose(projMat));
-    DirectX::XMStoreFloat4x4(&projection, projMat);
 
     mConstants.mWorldConstants.mViewMat = mCamera.GetViewMatrix();
-
-
     mConstants.mWorldConstants.mProjMat = projection;
+    mConstants.mWorldConstants.mCameraPosition = mCamera.GetCameraPosition();
     mConstants.UpdateBuffer(bufferNum);
 }
 

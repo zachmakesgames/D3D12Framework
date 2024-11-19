@@ -272,4 +272,24 @@ public:
             shadow
         };
     }
+
+
+    inline static std::string MatrixToString(DirectX::XMFLOAT4X4 matrix)
+    {
+        std::string matrixStr = "";
+        matrixStr += std::to_string(matrix._11) + ", " + std::to_string(matrix._12) + ", " + std::to_string(matrix._13) + ", " + std::to_string(matrix._14) + "\r\n";
+        matrixStr += std::to_string(matrix._21) + ", " + std::to_string(matrix._22) + ", " + std::to_string(matrix._23) + ", " + std::to_string(matrix._24) + "\r\n";
+        matrixStr += std::to_string(matrix._31) + ", " + std::to_string(matrix._32) + ", " + std::to_string(matrix._33) + ", " + std::to_string(matrix._34) + "\r\n";
+        matrixStr += std::to_string(matrix._41) + ", " + std::to_string(matrix._42) + ", " + std::to_string(matrix._43) + ", " + std::to_string(matrix._44);
+
+        return matrixStr;
+    }
+
+    inline static std::string VectorToString(DirectX::XMFLOAT4 vector)
+    {
+        std::string vectorStr = "";
+        vectorStr += std::to_string(vector.x) + ", " + std::to_string(vector.y) + ", " + std::to_string(vector.z) + ", " + std::to_string(vector.w) + "\r\n";
+
+        return vectorStr;
+    }
 };

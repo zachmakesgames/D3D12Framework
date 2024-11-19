@@ -91,6 +91,9 @@
     <ClInclude Include="LightingPass.h" />
     <ClInclude Include="Scene.h" />
     <ClInclude Include="GuiPass.h" />
+    <ClInclude Include="UnlitPass.h" />
+    <ClInclude Include="FrameTimer.h" />
+    <ClInclude Include="DebugPass.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Renderer\Buffer.cpp">
@@ -139,6 +142,8 @@
     <ClCompile Include="InputState.cpp" />
     <ClCompile Include="LightingPass.cpp" />
     <ClCompile Include="GuiPass.cpp" />
+    <ClCompile Include="UnlitPass.cpp" />
+    <ClCompile Include="DebugPass.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

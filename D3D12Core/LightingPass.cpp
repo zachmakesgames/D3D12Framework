@@ -40,7 +40,7 @@ void LightingPass::PreRender(UINT frameNumber)
 
     float color[] = { 0.2, 0.2, 0.5, 1 };
     cmdList->ClearRenderTargetView(Dx12Device::GetCurrentBackBufferView(), color, 1, &rect);
-    cmdList->ClearDepthStencilView(Dx12Device::GetDepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+    //cmdList->ClearDepthStencilView(Dx12Device::GetDepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
 
 
@@ -56,9 +56,9 @@ void LightingPass::PreRender(UINT frameNumber)
 
     cmdList->SetGraphicsRootSignature(mResourceGroup->mRootSignatures["lightingRootSig"].Get());
 
-    //cmdList->SetGraphicsRootConstantBufferView(0, mConstants->GetResourceForFrame(bufferNumber)->GetGPUVirtualAddress());
+    cmdList->SetGraphicsRootConstantBufferView(0, mConstants->GetResourceForFrame(bufferNumber)->GetGPUVirtualAddress());
 
-    cmdList->SetGraphicsRootDescriptorTable(0, gBuffer->GetGpuSrvHandle());
+    cmdList->SetGraphicsRootDescriptorTable(1, gBuffer->GetGpuSrvHandle());
 
     cmdList->SetPipelineState(mResourceGroup->mPSOs["deferredLightingPSO"].Get());
 

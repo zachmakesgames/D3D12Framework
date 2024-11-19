@@ -307,11 +307,18 @@ std::unique_ptr<Mesh> Mesh::CreateMesh(Vertex* vertexData, UINT vertexCount)
 	returnMesh->mVertexBuffer = Dx12Device::CreateBuffer(returnMesh->mVertexData, sizeof(Vertex) * returnMesh->mVertexCount);
 
 	returnMesh->mVertexBufferView = {};
-	returnMesh->mVertexBufferView.BufferLocation = returnMesh->mVertexBuffer->mResource->GetGPUVirtualAddress();
+	// We need to use the upload buffer if we want to be able to modify the mesh on the fly
+	//returnMesh->mVertexBufferView.BufferLocation = returnMesh->mVertexBuffer->mResource->GetGPUVirtualAddress();
+	returnMesh->mVertexBufferView.BufferLocation = returnMesh->mVertexBuffer->mUploadBuffer->GetGPUVirtualAddress();
 	returnMesh->mVertexBufferView.SizeInBytes = returnMesh->mVertexCount * sizeof(Vertex);
 	returnMesh->mVertexBufferView.StrideInBytes = sizeof(Vertex);
 
 	return std::move(returnMesh);
+}
+
+void Mesh::UpdateBuffer()
+{
+	mVertexBuffer->UpdateBuffer(0, mVertexCount * sizeof(Vertex), mVertexData);
 }
 
 Mesh::~Mesh()

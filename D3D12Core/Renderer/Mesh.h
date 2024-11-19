@@ -12,8 +12,14 @@ public:
 
 	static std::unique_ptr<Mesh> LoadMeshFromObj(std::string file_name);
 	static std::unique_ptr<Mesh> CreateMesh(Vertex* vertexData, UINT vertexCount);
+	
+	void UpdateBuffer();
 	~Mesh();
 
+	// Warning, DO NOT resize this array. The data can
+	// be modified but the resource buffer does not get
+	// resized and the view does not change. Only change
+	// existing vertices!
 	Vertex* mVertexData = nullptr;
 	uint64_t mVertexCount = 0;
 	uint64_t mDataLen = 0;

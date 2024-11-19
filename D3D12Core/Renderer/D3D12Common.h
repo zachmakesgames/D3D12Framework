@@ -17,7 +17,6 @@
 #include <DirectXPackedVector.h>
 #include <DirectXColors.h>
 #include <dxcapi.h>
-
 #include <pix3.h>
 
 #pragma comment(lib, "WinPixEventRuntime.lib")

@@ -11,11 +11,12 @@ struct VertexOut{
     float2 Tex      : TEXCOORD;
 };
 
-// cbuffer cbWorld : register(b0)
-// {
-//     float4x4 viewMat;
-//     float4x4 projMat;
-// };
+cbuffer cbWorld : register(b0)
+{
+    float4x4 viewMat;
+    float4x4 projMat;
+    float3 cameraPos;
+};
 
 // cbuffer cbObject : register(b1)
 // {
@@ -76,7 +77,7 @@ float4 psMain(float4 pos: SV_POSITION) : SV_TARGET
         discard;
     }
 
-    float3 eyePos = float3(0, 0, 0);
+    float3 eyePos = cameraPos;
 
 
     float4 lightPos = float4(30, 50, 0, 1);
