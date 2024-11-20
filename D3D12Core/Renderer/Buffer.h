@@ -16,7 +16,7 @@ public:
 		// Releasing the resources is causing crashes
 	}
 
-	inline void UpdateBuffer(int offset, int dataSize, void* data)
+	inline void UpdateBuffer(UINT offset, UINT dataSize, void* data)
 	{
 		if (mMappedData != nullptr)
 		{
@@ -33,7 +33,7 @@ public:
 	// This is not the correct way to create an array
 	// of unique pointers. Something like this:
 	//std::unique_ptr<Buffer[]> mBuffers;
-	std::unique_ptr<Buffer>* mBuffers;
+	std::unique_ptr<Buffer>* mBuffers = nullptr;
 	int mBufferCount = 0;
 
 	inline virtual ~FrameBuffer()

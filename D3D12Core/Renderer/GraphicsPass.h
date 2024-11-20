@@ -24,7 +24,7 @@ public:
 	virtual void Render(UINT frameNumber) {};
 	virtual void PostRender(UINT frameNumber) {};
 
-	inline GraphicsPass(std::string passName) : mPassName(passName) {};
+	inline GraphicsPass(std::string passName) : mPassName(passName), mResourceGroup(nullptr), mConstants(nullptr) {};
 
 	inline void RegisterRenderObject(RenderObject* objRef)
 	{

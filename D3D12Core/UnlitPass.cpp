@@ -12,15 +12,8 @@ void UnlitPass::PreRender(UINT frameNumber)
     GBuffer* gBuffer = nullptr;
     gBuffer = Dx12Device::GetGBuffer();
 
-    D3D12_RECT rect = Dx12Device::GetViewportSize();
-
-    D3D12_VIEWPORT viewPort = {};
-    viewPort.TopLeftX = 0;
-    viewPort.TopLeftY = 0;
-    viewPort.Width = rect.right;
-    viewPort.Height = rect.bottom;
-    viewPort.MinDepth = 0.0f;
-    viewPort.MaxDepth = 1.0f;
+    D3D12_VIEWPORT viewPort = Dx12Device::GetViewport();
+    D3D12_RECT rect = { 0, 0, static_cast<LONG>(viewPort.Width), static_cast<LONG>(viewPort.Height) };
 
     cmdList->RSSetViewports(1, &viewPort);
     cmdList->RSSetScissorRects(1, &rect);

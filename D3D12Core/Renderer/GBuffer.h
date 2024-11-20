@@ -61,15 +61,15 @@ private:
 	UINT mWidth = 0;
 	UINT mHeight = 0;
 
+	UINT mRtvDescriptorSize = 0;
+	UINT mDsvDescriptorSize = 0;
+	UINT mSrvDescriptorSize = 0;
+
 	DXGI_FORMAT mFormat = DXGI_FORMAT_R32G32B32A32_FLOAT;
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE mhCpuSrv;
 	CD3DX12_GPU_DESCRIPTOR_HANDLE mhGpuSrv;
 	CD3DX12_CPU_DESCRIPTOR_HANDLE mhCpuRtv;
-
-	UINT mRtvDescriptorSize;
-	UINT mDsvDescriptorSize;
-	UINT mSrvDescriptorSize;
 
 	// Probably dont actually need this handle
 	CD3DX12_CPU_DESCRIPTOR_HANDLE mhCpuDsv;
@@ -82,7 +82,7 @@ private:
 	// Probably dont actually need this heap
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mDsvHeap = nullptr;
 
-	const std::array<float, 4> mClearColor = { 0.2, 0.2, 0.5, 1 };
+	const std::array<float, 4> mClearColor = { 0.2f, 0.2f, 0.5f, 1.f };
 
 	friend class Dx12Device;
 };

@@ -1,5 +1,5 @@
 #pragma once
-#include "Renderer/GraphicsPass.h";
+#include "Renderer/GraphicsPass.h"
 
 
 class GBufferPass : public GraphicsPass

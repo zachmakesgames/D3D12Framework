@@ -17,7 +17,7 @@ RenderObject::RenderObject(RenderObjectInit initValue)
 		DirectX::XMFLOAT4X4 identF;
 		DirectX::XMStoreFloat4x4(&identF, ident);
 
-		for (int i = 0; i < mInstanceCount; ++i)
+		for (UINT i = 0; i < mInstanceCount; ++i)
 		{
 			RenderItemInstanceValues instVal = {};
 			instVal.instanceTransform = identF;

@@ -22,13 +22,13 @@ std::unique_ptr<Mesh> Mesh::LoadMeshFromObj(std::string file_name)
 	file.clear();
 	file.seekg(0);
 
+	// 4 billion verts is probably fine lol
+	UINT vertCount = 0;
+	UINT normCount = 0;
+	UINT texCount = 0;
+	UINT triCount = 0;
 
-	uint64_t vertCount = 0;
-	uint64_t normCount = 0;
-	uint64_t texCount = 0;
-	uint64_t triCount = 0;
-
-	uint64_t maxTris = lines * 3;
+	UINT maxTris = lines * 3;
 
 
 
@@ -39,10 +39,11 @@ std::unique_ptr<Mesh> Mesh::LoadMeshFromObj(std::string file_name)
 	DirectX::XMFLOAT3* norms = new DirectX::XMFLOAT3[lines];
 	DirectX::XMFLOAT2* tex = new DirectX::XMFLOAT2[lines];
 
-	DirectX::XMFLOAT3** tris = new DirectX::XMFLOAT3 * [lines];
+	//DirectX::XMFLOAT3** tris = new DirectX::XMFLOAT3 * [lines];
+	DirectX::XMINT3** tris = new DirectX::XMINT3 * [lines];
 	for (int i = 0; i < lines; ++i) {
 		//Special note: Using an ivec3 istead of a vec3 to avoid roundoff errors and compiler warnings
-		tris[i] = new DirectX::XMFLOAT3[3];//using glm::vec3 creatively here. 
+		tris[i] = new DirectX::XMINT3[3];//using glm::vec3 creatively here. 
 		//OBJ file recoreds faces as: f v1/t1/n1 v2/t2/n2 v3/t3/n3
 		//so tris[n][0].x = v1 .y = t1 .z = n1
 		//tris[n][1].x = v2 .y = t2 .z = n2
@@ -181,22 +182,22 @@ std::unique_ptr<Mesh> Mesh::LoadMeshFromObj(std::string file_name)
 
 
 	// Three vertices per triangle
-	int dataLen = triCount * 3;
+	UINT dataLen = triCount * 3;
 	//this->dataSize = dataLen;
 	returnMesh->mDataLen = dataLen;
 
-	int idx = 0;
+	UINT idx = 0;
 	//GLfloat* data = new GLfloat[dataLen];
 	//this->data = new vertex[dataLen];
 	returnMesh->mVertexData = new Vertex[dataLen];
 
-	for (int i = 0; i < dataLen; ++i) {
+	for (UINT i = 0; i < dataLen; ++i) {
 		//data[i] = {};
 		returnMesh->mVertexData[i] = {};
 	}
 
-	for (int i = 0; i < triCount; ++i) {
-		DirectX::XMFLOAT3* tri = tris[i];
+	for (UINT i = 0; i < triCount; ++i) {
+		DirectX::XMINT3* tri = tris[i];
 		//glm::ivec3* tri = tris[i];
 
 		int v1 = tri[0].x;

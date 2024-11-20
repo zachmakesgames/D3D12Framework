@@ -21,11 +21,11 @@ public:
 	// resized and the view does not change. Only change
 	// existing vertices!
 	Vertex* mVertexData = nullptr;
-	uint64_t mVertexCount = 0;
-	uint64_t mDataLen = 0;
+	UINT mVertexCount = 0;
+	UINT mDataLen = 0;
 
 	std::unique_ptr<Buffer> mVertexBuffer = nullptr;
-	D3D12_VERTEX_BUFFER_VIEW mVertexBufferView;
+	D3D12_VERTEX_BUFFER_VIEW mVertexBufferView = {};
 
 };
 

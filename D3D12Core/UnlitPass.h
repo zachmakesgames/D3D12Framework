@@ -1,6 +1,6 @@
 #pragma once
 #pragma once
-#include "Renderer/GraphicsPass.h";
+#include "Renderer/GraphicsPass.h"
 
 
 class UnlitPass : public GraphicsPass

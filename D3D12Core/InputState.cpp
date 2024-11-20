@@ -107,4 +107,8 @@ bool InputState::IsKeyDown(std::string keyCode)
 		int virtKey = mKeyCodes[keyCode];
 		return (mKeyStates[virtKey] == KeyState::KeyStateDown);
 	}
+	else
+	{
+		return false;
+	}
 }

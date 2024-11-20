@@ -6,15 +6,8 @@ void ForwardPass::PreRender(UINT frameNumber)
 
     UINT bufferNumber = Dx12Device::FrameNumToBufferNum(frameNumber);
 
-    D3D12_RECT rect = Dx12Device::GetViewportSize();
-
-    D3D12_VIEWPORT viewPort = {};
-    viewPort.TopLeftX = 0;
-    viewPort.TopLeftY = 0;
-    viewPort.Width = rect.right;
-    viewPort.Height = rect.bottom;
-    viewPort.MinDepth = 0.0f;
-    viewPort.MaxDepth = 1.0f;
+    D3D12_VIEWPORT viewPort = Dx12Device::GetViewport();
+    D3D12_RECT rect = { 0, 0, static_cast<LONG>(viewPort.Width), static_cast<LONG>(viewPort.Height) };
 
     cmdList->RSSetViewports(1, &viewPort);
     cmdList->RSSetScissorRects(1, &rect);
@@ -32,7 +25,7 @@ void ForwardPass::PreRender(UINT frameNumber)
 
     
 
-    float color[] = { 0.2, 0.2, 0.5, 1 };
+    float color[] = { 0.2f, 0.2f, 0.5f, 1.f };
     cmdList->ClearRenderTargetView(Dx12Device::GetCurrentBackBufferView(), color, 1, &rect);
     cmdList->ClearDepthStencilView(Dx12Device::GetDepthStencilView(), D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 

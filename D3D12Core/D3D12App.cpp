@@ -47,19 +47,19 @@ void D3D12App::Init()
 
     // Instanced rendering example with new support for instances built into 
     // RenderObject
-    RenderObjectInit d20InstInit = { "d20", "TestPattern", true, 5000 };
+    RenderObjectInit d20InstInit = { "d20", "TestPattern", true, 100000 };
     mResourceGroup.mObjects["d20Inst"] = std::make_unique<RenderObject>(d20InstInit);
 
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> distro(-600, 600);
 
-    for (int i = 0; i < d20InstInit.instanceCount; ++i)
+    for (UINT i = 0; i < d20InstInit.instanceCount; ++i)
     {
 
-        int x = distro(gen);
-        int y = distro(gen);
-        int z = distro(gen);
+        float x = (float)distro(gen);
+        float y = (float)distro(gen);
+        float z = (float)distro(gen);
         DirectX::XMMATRIX offsetMat = DirectX::XMMatrixTranslation(x, y, z);
 
         DirectX::XMFLOAT4X4 offsetMat4;
@@ -390,15 +390,15 @@ void D3D12App::Update()
 
     mFrameTimer.Tick();
 
-    float dt = mFrameTimer.GetFrameTime();
-    float cameraSpeed = 0.06;
+    float dt = (float)mFrameTimer.GetFrameTime();
+    float cameraSpeed = 0.06f;
 
     ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_FirstUseEver);
 
     std::string windowSize = "";
-    windowSize += std::to_string(Dx12Device::GetViewportSize().right);
+    windowSize += std::to_string((int)Dx12Device::GetViewport().Width);
     windowSize += "x";
-    windowSize += std::to_string(Dx12Device::GetViewportSize().bottom);
+    windowSize += std::to_string((int)Dx12Device::GetViewport().Height);
 
     std::string frameTimeStr = std::to_string(1000.f/(mFrameTimer.GetAverageFrameTime()));
 
@@ -427,7 +427,7 @@ void D3D12App::Update()
     mInputState.PollKeyboard();
     mInputState.PollMouse(mWindow);
 
-    D3D12_RECT viewport = Dx12Device::GetViewportSize();
+    D3D12_VIEWPORT viewport = Dx12Device::GetViewport();
 
     if (!ImGui::GetIO().WantCaptureMouse)
     {
@@ -436,8 +436,8 @@ void D3D12App::Update()
             POINT mousePos = mInputState.GetMouseChange();
             if (mousePos.x != 0 || mousePos.y != 0)
             {
-                float x = (float)mousePos.x / (float)viewport.right;
-                float y = (float)mousePos.y / (float)viewport.bottom;
+                float x = (float)mousePos.x / (float)viewport.Width;
+                float y = (float)mousePos.y / (float)viewport.Height;
 
                 // The camera movement is a bit weird, if we multiply it
                 // by the frame time then it jumps wildly and randomly with
@@ -518,7 +518,7 @@ void D3D12App::Update()
         }
     }
 
-    float aspect = (float)viewport.right / (float)viewport.bottom;
+    float aspect = viewport.Width/viewport.Height;
 
     DirectX::XMFLOAT4X4 projection;
     DirectX::XMMATRIX projMat = DirectX::XMMatrixPerspectiveFovLH(0.25f * DirectX::XM_PI, aspect, .1f, 1000.0f);
@@ -531,7 +531,7 @@ void D3D12App::Update()
 
     POINT screenSpaceMouse = mInputState.GetMousePosition();
 
-    DirectX::XMFLOAT4 clipSpaceMouse = DirectX::XMFLOAT4(screenSpaceMouse.x, screenSpaceMouse.y, 1000.f, 1.f);
+    DirectX::XMFLOAT4 clipSpaceMouse = DirectX::XMFLOAT4((float)screenSpaceMouse.x, (float)screenSpaceMouse.y, 1000.f, 1.f);
     DirectX::XMVECTOR clipSpaceMouseV = DirectX::XMLoadFloat4(&clipSpaceMouse);
 
 
@@ -540,7 +540,7 @@ void D3D12App::Update()
     //mouse_y = (2.f * (mouse_y / (float)viewport.bottom)) - 1.f;
 
     // Built in unproject requires the mouse position in clip space, not NDC
-    DirectX::XMVECTOR unproj = DirectX::XMVector3Unproject(clipSpaceMouseV, 0.f, 0.f, (float)viewport.right, (float)viewport.bottom, 0.1f, 1000.f, projMat, viewMat, DirectX::XMMatrixIdentity());
+    DirectX::XMVECTOR unproj = DirectX::XMVector3Unproject(clipSpaceMouseV, 0.f, 0.f, viewport.Width, viewport.Height, 0.1f, 1000.f, projMat, viewMat, DirectX::XMMatrixIdentity());
     DirectX::XMStoreFloat4(&worldSpaceMouse, unproj);
 
 
@@ -584,7 +584,7 @@ void D3D12App::Update()
     }
 
 
-    mObjectRotation += 0.001 * dt;
+    mObjectRotation += 0.001f * dt;
 
     DirectX::XMMATRIX translation = DirectX::XMMatrixTranslation(0, 20, 10);
     DirectX::XMMATRIX rotation = DirectX::XMMatrixRotationX(0.3 * DirectX::XM_PI);
@@ -653,9 +653,9 @@ void D3D12App::Run()
     {
         if (mResizeQueue.size() > 0)
         {
-            int size = mResizeQueue.size();
+            UINT size = (UINT)mResizeQueue.size();
             DirectX::XMINT2 newSize;
-            for (int i = 0; i < size; ++i)
+            for (UINT i = 0; i < size; ++i)
             {
                 newSize = mResizeQueue.front();
                 mResizeQueue.pop();

@@ -21,7 +21,7 @@ struct RenderObjectInit
 	const std::string meshRefName;
 	const std::string textureRefName;
 	const bool isInstanced;
-	const UINT64 instanceCount;
+	const UINT instanceCount;
 };
 
 
@@ -58,7 +58,7 @@ public:
 		buffer->UpdateBuffer(0, sizeof(RenderItemInstanceValues) * mInstanceCount, mInstanceValues.data());
 	}
 
-	inline UINT64 GetInstBufferSize()
+	inline UINT GetInstBufferSize()
 	{
 		return sizeof(RenderItemInstanceValues) * mInstanceCount;
 	}
@@ -68,7 +68,7 @@ public:
 	std::vector<RenderItemInstanceValues> mInstanceValues;
 	std::string mMeshRef;
 	std::string mTextureRef;
-	UINT64 mInstanceCount;
+	UINT mInstanceCount;
 
 private:
 	bool mInstanced;

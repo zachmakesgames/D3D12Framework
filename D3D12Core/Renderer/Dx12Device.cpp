@@ -392,6 +392,10 @@ Microsoft::WRL::ComPtr<ID3D12RootSignature> Dx12Device::CreateRootSignature(CD3D
 
 		return out_rootSig;
 	}
+	else
+	{
+		return nullptr;
+	}
 }
 
 Microsoft::WRL::ComPtr<ID3D12PipelineState> Dx12Device::CreatePSO(D3D12_GRAPHICS_PIPELINE_STATE_DESC* desc)
@@ -401,6 +405,10 @@ Microsoft::WRL::ComPtr<ID3D12PipelineState> Dx12Device::CreatePSO(D3D12_GRAPHICS
 		Microsoft::WRL::ComPtr<ID3D12PipelineState> out_pso;
 		ThrowIfFailed(sDevice->mD3dDevice->CreateGraphicsPipelineState(desc, IID_PPV_ARGS(&out_pso)));
 		return out_pso;
+	}
+	else
+	{
+		return nullptr;
 	}
 }
 
@@ -457,6 +465,11 @@ D3D12_CPU_DESCRIPTOR_HANDLE Dx12Device::GetCurrentBackBufferView()
 			sDevice->mCurrentBackBuffer,
 			sDevice->mRtvDescriptorSize);
 	}
+	else
+	{
+		// Return a blank handle and pray
+		return {};
+	}
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE Dx12Device::GetDepthStencilView()
@@ -464,6 +477,11 @@ D3D12_CPU_DESCRIPTOR_HANDLE Dx12Device::GetDepthStencilView()
 	if (sDevice != nullptr)
 	{
 		return sDevice->mDsvHeap->GetCPUDescriptorHandleForHeapStart();
+	}
+	else
+	{
+		// Return a blank handle and pray
+		return {};
 	}
 }
 
@@ -789,16 +807,25 @@ GBuffer* Dx12Device::GetGBuffer()
 	{
 		return &sDevice->mGBuffer;
 	}
+	else
+	{
+		return nullptr;
+	}
 }
 
-D3D12_RECT Dx12Device::GetViewportSize()
+D3D12_VIEWPORT Dx12Device::GetViewport()
 {
+	D3D12_VIEWPORT viewport;
 	if (sDevice != nullptr)
 	{
-		D3D12_RECT rect = { 0, 0, sDevice->mSwapchainWidth, sDevice->mSwapchainHeight };
-
-		return rect;
+		viewport = { 0, 0, (float)sDevice->mSwapchainWidth, (float)sDevice->mSwapchainHeight, 0, 1 };
 	}
+	else
+	{
+		viewport = { 0, 0, 0, 0, 0, 0 };
+	}
+
+	return viewport;
 }
 
 void Dx12Device::Resize(int width, int height)
@@ -890,6 +917,10 @@ LRESULT CALLBACK Dx12Device::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
 	{
 		return sDevice->WndProcPrivate(hWnd, message, wParam, lParam);
 	}
+	else
+	{
+		return -1;
+	}
 }
 
 std::recursive_mutex* Dx12Device::GetImGuiIoMutex()
@@ -897,5 +928,9 @@ std::recursive_mutex* Dx12Device::GetImGuiIoMutex()
 	if (sDevice != nullptr)
 	{
 		return &sDevice->mImGuiIoMutex;
+	}
+	else
+	{
+		return nullptr;
 	}
 }

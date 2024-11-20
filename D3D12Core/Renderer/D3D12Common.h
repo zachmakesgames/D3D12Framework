@@ -24,9 +24,9 @@
 
 struct ResourceViewHandle
 {
-    UINT mOffset;
-    CD3DX12_CPU_DESCRIPTOR_HANDLE mCpuHandle;
-    CD3DX12_GPU_DESCRIPTOR_HANDLE mGpuHandle;
+    UINT mOffset = 0;
+    CD3DX12_CPU_DESCRIPTOR_HANDLE mCpuHandle = {};
+    CD3DX12_GPU_DESCRIPTOR_HANDLE mGpuHandle = {};
 };
 
 /// 

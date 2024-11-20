@@ -77,7 +77,7 @@ public:
 
 	static GBuffer* GetGBuffer();
 
-	static D3D12_RECT GetViewportSize();
+	static D3D12_VIEWPORT GetViewport();
 
 	static void Resize(int width, int height);
 
