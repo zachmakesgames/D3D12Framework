@@ -18,8 +18,8 @@ struct RenderItemInstanceValues
 
 struct RenderObjectInit
 {
-	const std::string meshRefName;
-	const std::string textureRefName;
+	const uint64_t meshRefName;
+	const uint64_t textureRefName;
 	const bool isInstanced;
 	const UINT instanceCount;
 };
@@ -66,8 +66,8 @@ public:
 
 	RenderItemConstants mConstants;
 	std::vector<RenderItemInstanceValues> mInstanceValues;
-	std::string mMeshRef;
-	std::string mTextureRef;
+	uint64_t mMeshRef;
+	uint64_t mTextureRef;
 	UINT mInstanceCount;
 
 private:

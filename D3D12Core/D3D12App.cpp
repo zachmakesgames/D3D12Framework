@@ -1,5 +1,6 @@
 #include "D3D12App.h"
 #include <random>
+#include "Renderer/Utils.h"
 
 D3D12App::D3D12App(HWND window, int swapchainWidth, int swapchainHeight, bool windowed):
 	mWindow(window), mWidth(swapchainWidth), mHeight(swapchainHeight), mWindowed(windowed)
@@ -30,25 +31,24 @@ void D3D12App::Init()
     CreateShaders();
     CreatePSOs();
 
-    RenderObjectInit boxInit = { "box", "TestPattern", false, 1 };
-    RenderObjectInit d20Init = { "d20", "TestPattern", false, 1 };
+    RenderObjectInit boxInit = { "box"_h, "TestPattern"_h, false, 1 };
+    RenderObjectInit d20Init = { "d20"_h, "TestPattern"_h, false, 1 };
 
-    RenderObjectInit gizmoInit{ "gizmoArrow", "TestPattern", true, 3 };
-    RenderObjectInit debugLineInit{ "debugLine", "TestPattern", true, 1 };
-    RenderObjectInit debugCubeInit{ "debugCube", "TestPattern", true, 2 };
+    RenderObjectInit gizmoInit{ "gizmoArrow"_h, "TestPattern"_h, true, 3 };
+    RenderObjectInit debugLineInit{ "debugLine"_h, "TestPattern"_h, true, 1 };
+    RenderObjectInit debugCubeInit{ "debugCube"_h, "TestPattern"_h, true, 2 };
     
-    
-    mResourceGroup.mObjects["box"] = std::make_unique<RenderObject>(boxInit);
-    mResourceGroup.mObjects["box2"] = std::make_unique<RenderObject>(d20Init);
+    mResourceGroup.mObjects["box"_h] = std::make_unique<RenderObject>(boxInit);
+    mResourceGroup.mObjects["box2"_h] = std::make_unique<RenderObject>(d20Init);
 
-    mResourceGroup.mObjects["gizmo"] = std::make_unique<RenderObject>(gizmoInit);
-    mResourceGroup.mObjects["debugLine"] = std::make_unique<RenderObject>(debugLineInit);
-    mResourceGroup.mObjects["debugCube"] = std::make_unique<RenderObject>(debugCubeInit);
+    mResourceGroup.mObjects["gizmo"_h] = std::make_unique<RenderObject>(gizmoInit);
+    mResourceGroup.mObjects["debugLine"_h] = std::make_unique<RenderObject>(debugLineInit);
+    mResourceGroup.mObjects["debugCube"_h] = std::make_unique<RenderObject>(debugCubeInit);
 
     // Instanced rendering example with new support for instances built into 
     // RenderObject
-    RenderObjectInit d20InstInit = { "d20", "TestPattern", true, 100000 };
-    mResourceGroup.mObjects["d20Inst"] = std::make_unique<RenderObject>(d20InstInit);
+    RenderObjectInit d20InstInit = { "d20"_h, "TestPattern"_h, true, 100000 };
+    mResourceGroup.mObjects["d20Inst"_h] = std::make_unique<RenderObject>(d20InstInit);
 
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -66,7 +66,7 @@ void D3D12App::Init()
         DirectX::XMStoreFloat4x4(&offsetMat4, offsetMat);
 
 
-        mResourceGroup.mObjects["d20Inst"]->mInstanceValues[i].instanceTransform = offsetMat4;
+        mResourceGroup.mObjects["d20Inst"_h]->mInstanceValues[i].instanceTransform = offsetMat4;
     }
 
 
@@ -113,29 +113,29 @@ void D3D12App::Init()
     DirectX::XMStoreFloat4x4(&translateZ4x4, translateZ);
     
     
-    mResourceGroup.mObjects["gizmo"]->mInstanceValues[0].instanceTransform = zAxisRotation;
-    mResourceGroup.mObjects["gizmo"]->mInstanceValues[0].instanceColor = DirectX::XMFLOAT4(1, 0, 0, 1);
-    mResourceGroup.mObjects["gizmo"]->mInstanceValues[1].instanceTransform = identity4x4;
-    mResourceGroup.mObjects["gizmo"]->mInstanceValues[1].instanceColor = DirectX::XMFLOAT4(0, 1, 0, 1);
-    mResourceGroup.mObjects["gizmo"]->mInstanceValues[2].instanceTransform = xAxisRotation;
-    mResourceGroup.mObjects["gizmo"]->mInstanceValues[2].instanceColor = DirectX::XMFLOAT4(0, 0, 1, 1);
+    mResourceGroup.mObjects["gizmo"_h]->mInstanceValues[0].instanceTransform = zAxisRotation;
+    mResourceGroup.mObjects["gizmo"_h]->mInstanceValues[0].instanceColor = DirectX::XMFLOAT4(1, 0, 0, 1);
+    mResourceGroup.mObjects["gizmo"_h]->mInstanceValues[1].instanceTransform = identity4x4;
+    mResourceGroup.mObjects["gizmo"_h]->mInstanceValues[1].instanceColor = DirectX::XMFLOAT4(0, 1, 0, 1);
+    mResourceGroup.mObjects["gizmo"_h]->mInstanceValues[2].instanceTransform = xAxisRotation;
+    mResourceGroup.mObjects["gizmo"_h]->mInstanceValues[2].instanceColor = DirectX::XMFLOAT4(0, 0, 1, 1);
 
-    mResourceGroup.mObjects["debugLine"]->mInstanceValues[0].instanceTransform = identity4x4;
-    mResourceGroup.mObjects["debugLine"]->mInstanceValues[0].instanceColor = DirectX::XMFLOAT4(1, 1, 1, 1);
+    mResourceGroup.mObjects["debugLine"_h]->mInstanceValues[0].instanceTransform = identity4x4;
+    mResourceGroup.mObjects["debugLine"_h]->mInstanceValues[0].instanceColor = DirectX::XMFLOAT4(1, 1, 1, 1);
 
-    mResourceGroup.mObjects["debugCube"]->mInstanceValues[0].instanceTransform = scale4x4;
-    mResourceGroup.mObjects["debugCube"]->mInstanceValues[0].instanceColor = DirectX::XMFLOAT4(1, 148.f/255.f, 27.f/255.f, 1);
-    mResourceGroup.mObjects["debugCube"]->mInstanceValues[1].instanceTransform = scale4x4;
-    mResourceGroup.mObjects["debugCube"]->mInstanceValues[1].instanceColor = DirectX::XMFLOAT4(0, 1.f, 0.f, 1);
+    mResourceGroup.mObjects["debugCube"_h]->mInstanceValues[0].instanceTransform = scale4x4;
+    mResourceGroup.mObjects["debugCube"_h]->mInstanceValues[0].instanceColor = DirectX::XMFLOAT4(1, 148.f/255.f, 27.f/255.f, 1);
+    mResourceGroup.mObjects["debugCube"_h]->mInstanceValues[1].instanceTransform = scale4x4;
+    mResourceGroup.mObjects["debugCube"_h]->mInstanceValues[1].instanceColor = DirectX::XMFLOAT4(0, 1.f, 0.f, 1);
 
 
 
     for (int i = 0; i < Dx12Device::GetSwapchainBufferCount(); ++i)
     {
-        mResourceGroup.mObjects["d20Inst"]->UpdateInstanceBuffer(i);
-        mResourceGroup.mObjects["gizmo"]->UpdateInstanceBuffer(i);
-        mResourceGroup.mObjects["debugLine"]->UpdateInstanceBuffer(i);
-        mResourceGroup.mObjects["debugCube"]->UpdateInstanceBuffer(i);
+        mResourceGroup.mObjects["d20Inst"_h]->UpdateInstanceBuffer(i);
+        mResourceGroup.mObjects["gizmo"_h]->UpdateInstanceBuffer(i);
+        mResourceGroup.mObjects["debugLine"_h]->UpdateInstanceBuffer(i);
+        mResourceGroup.mObjects["debugCube"_h]->UpdateInstanceBuffer(i);
     }
 
     
@@ -145,17 +145,17 @@ void D3D12App::Init()
     mPasses["mainPass"] = new ForwardPass(&mResourceGroup, &mConstants);
     mPasses["mainPass"]->mPassName = "Forward pass";
 
-    mPasses["mainPass"]->RegisterRenderObject(mResourceGroup.mObjects["box"].get());
-    mPasses["mainPass"]->RegisterRenderObject(mResourceGroup.mObjects["box2"].get());
+    mPasses["mainPass"]->RegisterRenderObject(mResourceGroup.mObjects["box"_h].get());
+    mPasses["mainPass"]->RegisterRenderObject(mResourceGroup.mObjects["box2"_h].get());
 
 
     // The GBuffer pass for deferred lighting
     mPasses["deferredPass"] = new GBufferPass(&mResourceGroup, &mConstants);
     mPasses["deferredPass"]->mPassName = "Deferred pass";
 
-    mPasses["deferredPass"]->RegisterRenderObject(mResourceGroup.mObjects["box"].get());
-    mPasses["deferredPass"]->RegisterRenderObject(mResourceGroup.mObjects["box2"].get());
-    mPasses["deferredPass"]->RegisterRenderObject(mResourceGroup.mObjects["d20Inst"].get());
+    mPasses["deferredPass"]->RegisterRenderObject(mResourceGroup.mObjects["box"_h].get());
+    mPasses["deferredPass"]->RegisterRenderObject(mResourceGroup.mObjects["box2"_h].get());
+    mPasses["deferredPass"]->RegisterRenderObject(mResourceGroup.mObjects["d20Inst"_h].get());
 
     // The lighting pass for deferred lighting
     mPasses["deferredLightingPass"] = new LightingPass(&mResourceGroup, &mConstants);
@@ -170,9 +170,9 @@ void D3D12App::Init()
     mPasses["debugPass"] = new DebugPass(&mResourceGroup, &mConstants);
     mPasses["debugPass"]->mPassName = "Debug Pass";
 
-    mPasses["unlitPass"]->RegisterRenderObject(mResourceGroup.mObjects["gizmo"].get());
-    mPasses["debugPass"]->RegisterRenderObject(mResourceGroup.mObjects["debugLine"].get());
-    mPasses["debugPass"]->RegisterRenderObject(mResourceGroup.mObjects["debugCube"].get());
+    mPasses["unlitPass"]->RegisterRenderObject(mResourceGroup.mObjects["gizmo"_h].get());
+    mPasses["debugPass"]->RegisterRenderObject(mResourceGroup.mObjects["debugLine"_h].get());
+    mPasses["debugPass"]->RegisterRenderObject(mResourceGroup.mObjects["debugCube"_h].get());
 
     //mPassGraph.AddPass(mPasses["mainPass"]);          // This would enable forward rendering with no lighting
     mPassGraph.AddPass(mPasses["deferredPass"]);        // These enable deferred rendering with lighting
@@ -209,14 +209,14 @@ void D3D12App::Init()
     DirectX::XMStoreFloat4x4(&translationFloat, transform);
 
 
-    mResourceGroup.mObjects["box"]->mConstants.worldTransform = translationFloat;
+    mResourceGroup.mObjects["box"_h]->mConstants.worldTransform = translationFloat;
 
     DirectX::XMMATRIX translation2 = DirectX::XMMatrixTranslation(-5, 0, 15);
     DirectX::XMMATRIX transform2 = DirectX::XMMatrixMultiply(rot, translation2);
     DirectX::XMFLOAT4X4 translationFloat2;
     DirectX::XMStoreFloat4x4(&translationFloat2, transform2);
 
-    mResourceGroup.mObjects["box2"]->mConstants.worldTransform = translationFloat2;
+    mResourceGroup.mObjects["box2"_h]->mConstants.worldTransform = translationFloat2;
 
 
 
@@ -246,7 +246,7 @@ void D3D12App::CreateRootSigs()
         (UINT)samplers.size(), samplers.data(),
         D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
-    mResourceGroup.mRootSignatures["mainRootSig"] = Dx12Device::CreateRootSignature(&mainRootSig);
+    mResourceGroup.mRootSignatures["mainRootSig"_h] = Dx12Device::CreateRootSignature(&mainRootSig);
 
 
     CD3DX12_DESCRIPTOR_RANGE gBufferSrvTable;
@@ -260,24 +260,24 @@ void D3D12App::CreateRootSigs()
         (UINT)samplers.size(), samplers.data(),
         D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
-    mResourceGroup.mRootSignatures["lightingRootSig"] = Dx12Device::CreateRootSignature(&lightingRootSig);
+    mResourceGroup.mRootSignatures["lightingRootSig"_h] = Dx12Device::CreateRootSignature(&lightingRootSig);
 }
 
 void D3D12App::CreateGeometry()
 {
-    mResourceGroup.mGeometry["box"] = Mesh::LoadMeshFromObj("../../../Resources/Models/box.obj");
-    mResourceGroup.mGeometry["d20"] = Mesh::LoadMeshFromObj("../../../Resources/Models/D20.obj");
-    mResourceGroup.mGeometry["gizmoArrow"] = Mesh::LoadMeshFromObj("../../../Resources/Models/YArrow.obj");
+    mResourceGroup.mGeometry["box"_h] = Mesh::LoadMeshFromObj("../../../Resources/Models/box.obj");
+    mResourceGroup.mGeometry["d20"_h] = Mesh::LoadMeshFromObj("../../../Resources/Models/D20.obj");
+    mResourceGroup.mGeometry["gizmoArrow"_h] = Mesh::LoadMeshFromObj("../../../Resources/Models/YArrow.obj");
 
-    mResourceGroup.mGeometry["triangle"] = Mesh::CreateMesh(sFullScreenTriangle, 3);
-    mResourceGroup.mGeometry["debugLine"] = Mesh::CreateMesh(sLine, 2);
-    mResourceGroup.mGeometry["debugCube"] = Mesh::CreateMesh(sCube, sizeof(sCube)/sizeof(Vertex));
+    mResourceGroup.mGeometry["triangle"_h] = Mesh::CreateMesh(sFullScreenTriangle, 3);
+    mResourceGroup.mGeometry["debugLine"_h] = Mesh::CreateMesh(sLine, 2);
+    mResourceGroup.mGeometry["debugCube"_h] = Mesh::CreateMesh(sCube, sizeof(sCube)/sizeof(Vertex));
 
 
 
     // TODO: Why is this here? Where does this go? How does a computer even work?!
-    mResourceGroup.mTextures["TestPattern"] = Texture("TestPattern", L"../../../Resources/Textures/TestPattern.dds");
-    HRESULT hr = Dx12Device::LoadTextureFromDDSFile(&mResourceGroup.mTextures["TestPattern"]);
+    mResourceGroup.mTextures["TestPattern"_h] = Texture("TestPattern", L"../../../Resources/Textures/TestPattern.dds");
+    HRESULT hr = Dx12Device::LoadTextureFromDDSFile(&mResourceGroup.mTextures["TestPattern"_h]);
     if (FAILED(hr))
     {
         OutputDebugString(L"Failed to load DDS texture!\r\n");
@@ -287,14 +287,14 @@ void D3D12App::CreateGeometry()
 // TODO: Leave this for only very common shaders, allow GraphicsPasses to create their own resources
 void D3D12App::CreateShaders()
 {
-    mResourceGroup.mShaders["simpleVs"] = D3dUtils::Dxc3CompileShader(L"../../../Resources/Shaders/test.hlsl", nullptr, L"vsMain", L"vs_6_6");
-    mResourceGroup.mShaders["simplePs"] = D3dUtils::Dxc3CompileShader(L"../../../Resources/Shaders/test.hlsl", nullptr, L"psMain", L"ps_6_6");
+    mResourceGroup.mShaders["simpleVs"_h] = D3dUtils::Dxc3CompileShader(L"../../../Resources/Shaders/test.hlsl", nullptr, L"vsMain", L"vs_6_6");
+    mResourceGroup.mShaders["simplePs"_h] = D3dUtils::Dxc3CompileShader(L"../../../Resources/Shaders/test.hlsl", nullptr, L"psMain", L"ps_6_6");
 
-    mResourceGroup.mShaders["deferredVs"] = D3dUtils::Dxc3CompileShader(L"../../../Resources/Shaders/deferred.hlsl", nullptr, L"vsMain", L"vs_6_6");
-    mResourceGroup.mShaders["deferredPs"] = D3dUtils::Dxc3CompileShader(L"../../../Resources/Shaders/deferred.hlsl", nullptr, L"psMain", L"ps_6_6");
+    mResourceGroup.mShaders["deferredVs"_h] = D3dUtils::Dxc3CompileShader(L"../../../Resources/Shaders/deferred.hlsl", nullptr, L"vsMain", L"vs_6_6");
+    mResourceGroup.mShaders["deferredPs"_h] = D3dUtils::Dxc3CompileShader(L"../../../Resources/Shaders/deferred.hlsl", nullptr, L"psMain", L"ps_6_6");
 
-    mResourceGroup.mShaders["deferredLightingVs"] = D3dUtils::Dxc3CompileShader(L"../../../Resources/Shaders/deferredlighting.hlsl", nullptr, L"vsMain", L"vs_6_6");
-    mResourceGroup.mShaders["deferredLightingPs"] = D3dUtils::Dxc3CompileShader(L"../../../Resources/Shaders/deferredlighting.hlsl", nullptr, L"psMain", L"ps_6_6");
+    mResourceGroup.mShaders["deferredLightingVs"_h] = D3dUtils::Dxc3CompileShader(L"../../../Resources/Shaders/deferredlighting.hlsl", nullptr, L"vsMain", L"vs_6_6");
+    mResourceGroup.mShaders["deferredLightingPs"_h] = D3dUtils::Dxc3CompileShader(L"../../../Resources/Shaders/deferredlighting.hlsl", nullptr, L"psMain", L"ps_6_6");
 }
 
 
@@ -322,9 +322,9 @@ void D3D12App::CreatePSOs()
     ZeroMemory(&psoDesc, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
 
     psoDesc.InputLayout = { inputLayout.data(), (UINT)inputLayout.size() };
-    psoDesc.pRootSignature = mResourceGroup.mRootSignatures["mainRootSig"].Get();
-    psoDesc.VS = { reinterpret_cast<BYTE*>(mResourceGroup.mShaders["simpleVs"]->GetBufferPointer()), mResourceGroup.mShaders["simpleVs"]->GetBufferSize()};
-    psoDesc.PS = { reinterpret_cast<BYTE*>(mResourceGroup.mShaders["simplePs"]->GetBufferPointer()), mResourceGroup.mShaders["simplePs"]->GetBufferSize() };
+    psoDesc.pRootSignature = mResourceGroup.mRootSignatures["mainRootSig"_h].Get();
+    psoDesc.VS = { reinterpret_cast<BYTE*>(mResourceGroup.mShaders["simpleVs"_h]->GetBufferPointer()), mResourceGroup.mShaders["simpleVs"_h]->GetBufferSize()};
+    psoDesc.PS = { reinterpret_cast<BYTE*>(mResourceGroup.mShaders["simplePs"_h]->GetBufferPointer()), mResourceGroup.mShaders["simplePs"_h]->GetBufferSize() };
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
     psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
     psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
@@ -337,26 +337,26 @@ void D3D12App::CreatePSOs()
     psoDesc.SampleDesc.Quality = 0;
     psoDesc.DSVFormat = Dx12Device::GetDepthStencilFormat();
 
-    mResourceGroup.mPSOs["simplePSO"] = Dx12Device::CreatePSO(&psoDesc);
+    mResourceGroup.mPSOs["simplePSO"_h] = Dx12Device::CreatePSO(&psoDesc);
 
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_LINE;
     
 
-    mResourceGroup.mPSOs["debugPSO"] = Dx12Device::CreatePSO(&psoDesc);
+    mResourceGroup.mPSOs["debugPSO"_h] = Dx12Device::CreatePSO(&psoDesc);
 
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
-    psoDesc.pRootSignature = mResourceGroup.mRootSignatures["lightingRootSig"].Get();
-    psoDesc.VS = { reinterpret_cast<BYTE*>(mResourceGroup.mShaders["deferredLightingVs"]->GetBufferPointer()), mResourceGroup.mShaders["deferredLightingVs"]->GetBufferSize() };
-    psoDesc.PS = { reinterpret_cast<BYTE*>(mResourceGroup.mShaders["deferredLightingPs"]->GetBufferPointer()), mResourceGroup.mShaders["deferredLightingPs"]->GetBufferSize() };
+    psoDesc.pRootSignature = mResourceGroup.mRootSignatures["lightingRootSig"_h].Get();
+    psoDesc.VS = { reinterpret_cast<BYTE*>(mResourceGroup.mShaders["deferredLightingVs"_h]->GetBufferPointer()), mResourceGroup.mShaders["deferredLightingVs"_h]->GetBufferSize() };
+    psoDesc.PS = { reinterpret_cast<BYTE*>(mResourceGroup.mShaders["deferredLightingPs"_h]->GetBufferPointer()), mResourceGroup.mShaders["deferredLightingPs"_h]->GetBufferSize() };
 
     psoDesc.DepthStencilState.DepthEnable = false;
-    mResourceGroup.mPSOs["deferredLightingPSO"] = Dx12Device::CreatePSO(&psoDesc);
+    mResourceGroup.mPSOs["deferredLightingPSO"_h] = Dx12Device::CreatePSO(&psoDesc);
 
     psoDesc.DepthStencilState.DepthEnable = true;
-    psoDesc.pRootSignature = mResourceGroup.mRootSignatures["mainRootSig"].Get();
-    psoDesc.VS = { reinterpret_cast<BYTE*>(mResourceGroup.mShaders["deferredVs"]->GetBufferPointer()), mResourceGroup.mShaders["deferredVs"]->GetBufferSize() };
-    psoDesc.PS = { reinterpret_cast<BYTE*>(mResourceGroup.mShaders["deferredPs"]->GetBufferPointer()), mResourceGroup.mShaders["deferredPs"]->GetBufferSize() };
+    psoDesc.pRootSignature = mResourceGroup.mRootSignatures["mainRootSig"_h].Get();
+    psoDesc.VS = { reinterpret_cast<BYTE*>(mResourceGroup.mShaders["deferredVs"_h]->GetBufferPointer()), mResourceGroup.mShaders["deferredVs"_h]->GetBufferSize() };
+    psoDesc.PS = { reinterpret_cast<BYTE*>(mResourceGroup.mShaders["deferredPs"_h]->GetBufferPointer()), mResourceGroup.mShaders["deferredPs"_h]->GetBufferSize() };
     
 
     DXGI_FORMAT gBufferFormat = gBuffer->GetFormat();
@@ -368,7 +368,7 @@ void D3D12App::CreatePSOs()
     psoDesc.RTVFormats[4] = gBufferFormat;
     psoDesc.RTVFormats[5] = gBufferFormat;
 
-    mResourceGroup.mPSOs["deferredPSO"] = Dx12Device::CreatePSO(&psoDesc);
+    mResourceGroup.mPSOs["deferredPSO"_h] = Dx12Device::CreatePSO(&psoDesc);
 
 
 
@@ -567,20 +567,20 @@ void D3D12App::Update()
 
     if (doScreenSpaceProjection)
     {
-        mResourceGroup.mObjects["debugCube"]->mInstanceValues[0].instanceTransform = cubeTransform4x4;
-        mResourceGroup.mObjects["debugCube"]->mInstanceValues[1].instanceTransform = cubeTransform2_4x4;
+        mResourceGroup.mObjects["debugCube"_h]->mInstanceValues[0].instanceTransform = cubeTransform4x4;
+        mResourceGroup.mObjects["debugCube"_h]->mInstanceValues[1].instanceTransform = cubeTransform2_4x4;
         for (int i = 0; i < Dx12Device::GetSwapchainBufferCount(); ++i)
         {
-            mResourceGroup.mObjects["debugCube"]->UpdateInstanceBuffer(i);
+            mResourceGroup.mObjects["debugCube"_h]->UpdateInstanceBuffer(i);
         }
 
 
         DirectX::XMFLOAT3 cameraPosx = DirectX::XMFLOAT3(cameraPos.x, cameraPos.y, cameraPos.z);
         DirectX::XMFLOAT3 mousePosx = DirectX::XMFLOAT3(mousePos.x, mousePos.y, mousePos.z);
 
-        mResourceGroup.mGeometry["debugLine"]->mVertexData[0].position = cameraPos;
-        mResourceGroup.mGeometry["debugLine"]->mVertexData[1].position = mousePos;
-        mResourceGroup.mGeometry["debugLine"]->UpdateBuffer();
+        mResourceGroup.mGeometry["debugLine"_h]->mVertexData[0].position = cameraPos;
+        mResourceGroup.mGeometry["debugLine"_h]->mVertexData[1].position = mousePos;
+        mResourceGroup.mGeometry["debugLine"_h]->UpdateBuffer();
     }
 
 
@@ -596,17 +596,17 @@ void D3D12App::Update()
     DirectX::XMFLOAT4X4 translationFloat;
     DirectX::XMStoreFloat4x4(&translationFloat, transform);
 
-    mResourceGroup.mObjects["box"]->mConstants.worldTransform = translationFloat;
+    mResourceGroup.mObjects["box"_h]->mConstants.worldTransform = translationFloat;
 
     DirectX::XMMATRIX translation2 = DirectX::XMMatrixTranslation(-5, 0, 20);
     DirectX::XMMATRIX transform2 = DirectX::XMMatrixMultiply(rot, translation2);
     DirectX::XMFLOAT4X4 translationFloat2;
     DirectX::XMStoreFloat4x4(&translationFloat2, transform2);
 
-    mResourceGroup.mObjects["box2"]->mConstants.worldTransform = translationFloat2;
+    mResourceGroup.mObjects["box2"_h]->mConstants.worldTransform = translationFloat2;
 
-    mResourceGroup.mObjects["box"]->UpdateBuffer(bufferNum);
-    mResourceGroup.mObjects["box2"]->UpdateBuffer(bufferNum);
+    mResourceGroup.mObjects["box"_h]->UpdateBuffer(bufferNum);
+    mResourceGroup.mObjects["box2"_h]->UpdateBuffer(bufferNum);
     mConstants.UpdateBuffer(bufferNum);
 
 

@@ -35,11 +35,11 @@ void ForwardPass::PreRender(UINT frameNumber)
     auto heaps = Dx12Device::GetDescriptorHeaps();
     cmdList->SetDescriptorHeaps(1, &heaps[2]);
 
-    cmdList->SetGraphicsRootSignature(mResourceGroup->mRootSignatures["mainRootSig"].Get());
+    cmdList->SetGraphicsRootSignature(mResourceGroup->mRootSignatures["mainRootSig"_h].Get());
 
     cmdList->SetGraphicsRootConstantBufferView(0, mConstants->GetResourceForFrame(bufferNumber)->GetGPUVirtualAddress());
 
-    cmdList->SetPipelineState(mResourceGroup->mPSOs["simplePSO"].Get());
+    cmdList->SetPipelineState(mResourceGroup->mPSOs["simplePSO"_h].Get());
 }
 
 void ForwardPass::Render(UINT frameNumber)

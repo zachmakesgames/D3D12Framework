@@ -47,13 +47,13 @@ void LightingPass::PreRender(UINT frameNumber)
     };
     cmdList->SetDescriptorHeaps(1, heaps);
 
-    cmdList->SetGraphicsRootSignature(mResourceGroup->mRootSignatures["lightingRootSig"].Get());
+    cmdList->SetGraphicsRootSignature(mResourceGroup->mRootSignatures["lightingRootSig"_h].Get());
 
     cmdList->SetGraphicsRootConstantBufferView(0, mConstants->GetResourceForFrame(bufferNumber)->GetGPUVirtualAddress());
 
     cmdList->SetGraphicsRootDescriptorTable(1, gBuffer->GetGpuSrvHandle());
 
-    cmdList->SetPipelineState(mResourceGroup->mPSOs["deferredLightingPSO"].Get());
+    cmdList->SetPipelineState(mResourceGroup->mPSOs["deferredLightingPSO"_h].Get());
 
     PIXEndEvent(cmdList.Get());
 }
@@ -73,7 +73,7 @@ void LightingPass::Render(UINT frameNumber)
 
         //cmdList->SetGraphicsRootDescriptorTable(2, SrvGpuHandle);
 
-        Mesh* mesh = mResourceGroup->mGeometry["triangle"].get();
+        Mesh* mesh = mResourceGroup->mGeometry["triangle"_h].get();
 
         cmdList->IASetVertexBuffers(0, 1, &mesh->mVertexBufferView);
         cmdList->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

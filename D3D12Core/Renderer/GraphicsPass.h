@@ -4,6 +4,7 @@
 #include "RenderObject.h"
 #include "ResourceGroup.h"
 #include "AppConstants.h"
+#include "Utils.h"
 
 class GraphicsPass
 {
