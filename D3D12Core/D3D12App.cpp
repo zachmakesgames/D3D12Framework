@@ -267,6 +267,8 @@ void D3D12App::CreateGeometry()
 {
     mResourceGroup.mGeometry["box"_h] = Mesh::LoadMeshFromObj("../../../Resources/Models/box.obj");
     mResourceGroup.mGeometry["d20"_h] = Mesh::LoadMeshFromObj("../../../Resources/Models/D20.obj");
+    mResourceGroup.mCollisionGeometry["d20"_h] = Physics::CollisionMesh::LoadMeshFromObj("../../../Resources/Models/D20.obj");
+
     mResourceGroup.mGeometry["gizmoArrow"_h] = Mesh::LoadMeshFromObj("../../../Resources/Models/YArrow.obj");
 
     mResourceGroup.mGeometry["triangle"_h] = Mesh::CreateMesh(sFullScreenTriangle, 3);
@@ -422,6 +424,13 @@ void D3D12App::Update()
     ImGui::Text(cameraPosStr.c_str());
     ImGui::Text("Camera Forward:");
     ImGui::Text(cameraFwdStr.c_str());
+    ImGui::Text("Ray intersects triangle?");
+    ImGui::Text(std::to_string(mRayIntersectsTriangle).c_str());
+    if (mRayIntersectsTriangle)
+    {
+        ImGui::Text("Hit position:");
+        ImGui::Text(D3dUtils::VectorToString(mHitPos).c_str());
+    }
     ImGui::End();
 
     mInputState.PollKeyboard();
@@ -581,6 +590,17 @@ void D3D12App::Update()
         mResourceGroup.mGeometry["debugLine"_h]->mVertexData[0].position = cameraPos;
         mResourceGroup.mGeometry["debugLine"_h]->mVertexData[1].position = mousePos;
         mResourceGroup.mGeometry["debugLine"_h]->UpdateBuffer();
+
+        DirectX::XMMATRIX ident = DirectX::XMMatrixIdentity();
+        DirectX::XMVECTOR cameraPosV = DirectX::XMLoadFloat3(&cameraPosx);
+        DirectX::XMVECTOR mousePosV = DirectX::XMLoadFloat3(&mousePosx);
+
+        DirectX::XMVECTOR rayDir = DirectX::XMVectorSubtract(mousePosV, cameraPosV);
+
+
+        // Ray intersection test against the spinning d20 object
+        DirectX::XMMATRIX d20Transform = DirectX::XMLoadFloat4x4(&mResourceGroup.mObjects["box2"_h]->mConstants.worldTransform);
+        mRayIntersectsTriangle = mResourceGroup.mCollisionGeometry["d20"_h]->DoesRayIntersect(cameraPosV, rayDir, d20Transform, &mHitPos);
     }
 
 

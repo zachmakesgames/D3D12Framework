@@ -11,6 +11,9 @@
     <Filter Include="imgui">
       <UniqueIdentifier>{ff44b062-c59f-44b7-9d0b-b6811a741e92}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Physics">
+      <UniqueIdentifier>{9d29234f-66f6-44d9-8ed9-cb3d737b0132}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer\Texture.h">
@@ -94,6 +97,12 @@
     <ClInclude Include="UnlitPass.h" />
     <ClInclude Include="FrameTimer.h" />
     <ClInclude Include="DebugPass.h" />
+    <ClInclude Include="Physics\Triangle.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\CollisionMesh.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Renderer\Buffer.cpp">
@@ -144,6 +153,12 @@
     <ClCompile Include="GuiPass.cpp" />
     <ClCompile Include="UnlitPass.cpp" />
     <ClCompile Include="DebugPass.cpp" />
+    <ClCompile Include="Physics\Triangle.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Physics\CollisionMesh.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

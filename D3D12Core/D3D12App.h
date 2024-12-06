@@ -19,6 +19,7 @@
 #include "Camera.h"
 #include "Scene.h"
 #include "FrameTimer.h"
+#include "Physics/Triangle.h"
 
 class __declspec(dllexport) D3D12App
 {
@@ -90,5 +91,9 @@ private:
 
 	DirectX::XMFLOAT4 mDebugColor = DirectX::XMFLOAT4(1, 1, 1, 1);
 	ImVec4 color;
+
+	Physics::Triangle mTestTriangle = Physics::Triangle(DirectX::XMFLOAT3(0, 0, 0), DirectX::XMFLOAT3(5, 0, 0), DirectX::XMFLOAT3(0, 5, 0));
+	bool mRayIntersectsTriangle = false;
+	DirectX::XMFLOAT3 mHitPos = DirectX::XMFLOAT3(0, 0, 0);
 };
 

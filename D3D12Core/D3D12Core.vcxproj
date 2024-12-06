@@ -21,6 +21,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DebugPass.cpp" />
+    <ClCompile Include="Physics\CollisionMesh.cpp" />
+    <ClCompile Include="Physics\Triangle.cpp" />
     <ClCompile Include="UnlitPass.cpp" />
     <ClInclude Include="..\imported\imgui\backends\imgui_impl_dx12.h" />
     <ClInclude Include="..\imported\imgui\backends\imgui_impl_win32.h" />
@@ -39,6 +41,8 @@
     <ClCompile Include="..\imported\imgui\imgui_widgets.cpp" />
     <ClInclude Include="DebugPass.h" />
     <ClInclude Include="FrameTimer.h" />
+    <ClInclude Include="Physics\CollisionMesh.h" />
+    <ClInclude Include="Physics\Triangle.h" />
     <ClInclude Include="UnlitPass.h" />
   </ItemGroup>
   <ItemGroup>

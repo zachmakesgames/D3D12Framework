@@ -290,6 +290,14 @@ public:
 
         return vectorStr;
     }
+
+    inline static std::string VectorToString(DirectX::XMFLOAT3 vector)
+    {
+        std::string vectorStr = "";
+        vectorStr += std::to_string(vector.x) + ", " + std::to_string(vector.y) + ", " + std::to_string(vector.z) + "\r\n";
+
+        return vectorStr;
+    }
 };
 
 

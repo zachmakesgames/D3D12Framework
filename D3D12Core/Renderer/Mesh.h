@@ -26,6 +26,5 @@ public:
 
 	std::unique_ptr<Buffer> mVertexBuffer = nullptr;
 	D3D12_VERTEX_BUFFER_VIEW mVertexBufferView = {};
-
 };
 
