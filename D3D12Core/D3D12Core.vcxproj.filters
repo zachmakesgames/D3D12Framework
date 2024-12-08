@@ -103,6 +103,15 @@
     <ClInclude Include="Physics\CollisionMesh.h">
       <Filter>Physics</Filter>
     </ClInclude>
+    <ClInclude Include="Physics\PhysicsAABB.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\PhysicsPrimitives.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\PhysicsSphere.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Renderer\Buffer.cpp">
@@ -157,6 +166,12 @@
       <Filter>Physics</Filter>
     </ClCompile>
     <ClCompile Include="Physics\CollisionMesh.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Physics\PhysicsAABB.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Physics\PhysicsSphere.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,6 +1,8 @@
 #include "D3D12App.h"
 #include <random>
 #include "Renderer/Utils.h"
+#include "Physics/PhysicsAABB.h"
+#include "Physics/PhysicsSphere.h"
 
 D3D12App::D3D12App(HWND window, int swapchainWidth, int swapchainHeight, bool windowed):
 	mWindow(window), mWidth(swapchainWidth), mHeight(swapchainHeight), mWindowed(windowed)
