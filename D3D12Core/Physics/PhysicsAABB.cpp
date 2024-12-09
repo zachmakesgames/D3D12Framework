@@ -309,6 +309,87 @@ namespace Physics
 
 	}
 
+	bool DoesRayIntersectAABBXZ(DirectX::XMFLOAT3 point, DirectX::XMFLOAT3 direction, Rectangle aabb, DirectX::XMFLOAT4X4 aabbTransform, float& tMin, DirectX::XMFLOAT3* outPoint)
+	{
+		tMin = -FLT_MAX;
+		float tMax = FLT_MAX;
+
+		float point3[3] = { point.x, point.y, point.z };
+		float dir[3] = { direction.x, direction.y, direction.z };
+
+		// Need to recalculate the AABB based on the transform, this kinda defeats
+		// the purpose of an AABB doesnt it? But it will save us the effort of having
+		// to recalculate the AABB by iterating over the mesh, so I got that going
+		// for me, which is nice.
+		Rectangle newAABB = RecalculateAABB(aabb, aabbTransform);
+
+		float aabbMin[3] = { newAABB.mMin.x,newAABB.mMin.y, newAABB.mMin.z };
+		float aabbMax[3] = { newAABB.mMax.x,newAABB.mMax.y, newAABB.mMax.z };
+
+		for (int i = 0; i < 3; ++i)
+		{
+			if (fabs(dir[i]) < 0.0001)
+			{
+				if (point3[i] < aabbMin[i] || point3[i] > aabbMax[i])
+				{
+					if (i != 1)
+					{
+						// Special case for XZ, we skip the return of the Y component because
+						// we only carea bout the X and Z
+						return false;
+					}
+				}
+			}
+			else
+			{
+				float ood = 1.0f / dir[i];
+				float t1 = (aabbMin[i] - point3[i]) * ood;
+				float t2 = (aabbMax[i] - point3[i]) * ood;
+
+				if (t1 > t2)
+				{
+					float t3 = t1;
+					t1 = t2;
+					t2 = t3;
+				}
+
+				if (t1 > tMin)
+				{
+					tMin = t1;
+				}
+
+				if (t2 < tMax)
+				{
+					tMax = t2;
+				}
+
+				if (tMin > tMax)
+				{
+					if (i != 1)
+					{
+						// Special case for XZ, we skip the return of the Y component because
+						// we only carea bout the X and Z
+						return false;
+					}
+				}
+			}
+		}
+
+		if (outPoint != nullptr)
+		{
+			DirectX::XMVECTOR pointV = DirectX::XMLoadFloat3(&point);
+			DirectX::XMVECTOR directionV = DirectX::XMLoadFloat3(&direction);
+
+			directionV = DirectX::XMVectorScale(directionV, tMin);
+			DirectX::XMVECTOR result = DirectX::XMVectorAdd(pointV, directionV);
+
+			DirectX::XMStoreFloat3(outPoint, result);
+		}
+
+		return true;
+
+	}
+
 	/// END SECTION: Code examples from Real Time Collision Detection by Christer Ericson
 
 	static Rectangle RecalculateAABB(Rectangle aabb, DirectX::XMFLOAT4X4 aabbTransform)
@@ -353,45 +434,25 @@ namespace Physics
 			DirectX::XMStoreFloat3(&points[i], pointsV[i]);
 		}
 
-		xMin = FLT_MIN;
+		xMin = FLT_MAX;
 		xMax = -FLT_MAX;
-		yMin = FLT_MIN;
+		yMin = FLT_MAX;
 		yMax = -FLT_MAX;
-		zMin = FLT_MIN;
+		zMin = FLT_MAX;
 		zMax = -FLT_MAX;
 
 		for (int i = 0; i < 8; ++i)
 		{
 			DirectX::XMFLOAT3 vert = points[i];
-			// Compute min/max for x
-			if (vert.x < xMin)
-			{
-				xMin = vert.x;
-			}
-			if (vert.x > xMax)
-			{
-				xMax = vert.x;
-			}
+			// Compute min/max for each component
+			xMin = fmin(xMin, vert.x);
+			xMax = fmax(xMax, vert.x);
 
-			// Compute min/max for y
-			if (vert.y < yMin)
-			{
-				yMin = vert.y;
-			}
-			if (vert.y > yMax)
-			{
-				yMax = vert.y;
-			}
+			yMin = fmin(yMin, vert.y);
+			yMax = fmax(yMax, vert.y);
 
-			// Compute min/max for z
-			if (vert.z < zMin)
-			{
-				zMin = vert.z;
-			}
-			if (vert.z > zMax)
-			{
-				zMax = vert.z;
-			}
+			zMin = fmin(zMin, vert.z);
+			zMax = fmax(zMax, vert.z);
 		}
 
 

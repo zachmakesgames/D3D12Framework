@@ -52,8 +52,11 @@ void D3D12App::Init()
 
     // Instanced rendering example with new support for instances built into 
     // RenderObject
-    RenderObjectInit d20InstInit = { "d20"_h, "TestPattern"_h, true, 100000 };
+    RenderObjectInit d20InstInit = { "d20"_h, "TestPattern"_h, true, 10000 };
     mResourceGroup.mObjects["d20Inst"_h] = std::make_unique<RenderObject>(d20InstInit);
+
+    RenderObjectInit d20AABBInstInit = { "d20AABB"_h, "TestPattern"_h, true, 10000 };
+    mResourceGroup.mObjects["d20AABBInst"_h] = std::make_unique<RenderObject>(d20AABBInstInit);
 
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -72,6 +75,8 @@ void D3D12App::Init()
 
 
         mResourceGroup.mObjects["d20Inst"_h]->mInstanceValues[i].instanceTransform = offsetMat4;
+        mResourceGroup.mObjects["d20AABBInst"_h]->mInstanceValues[i].instanceTransform = offsetMat4;
+        mResourceGroup.mObjects["d20AABBInst"_h]->mInstanceValues[i].instanceColor = DirectX::XMFLOAT4(0, 0, 0, 0);
     }
 
 
@@ -146,6 +151,7 @@ void D3D12App::Init()
     for (int i = 0; i < Dx12Device::GetSwapchainBufferCount(); ++i)
     {
         mResourceGroup.mObjects["d20Inst"_h]->UpdateInstanceBuffer(i);
+        mResourceGroup.mObjects["d20AABBInst"_h]->UpdateInstanceBuffer(i);
         mResourceGroup.mObjects["gizmo"_h]->UpdateInstanceBuffer(i);
         mResourceGroup.mObjects["debugLine"_h]->UpdateInstanceBuffer(i);
         mResourceGroup.mObjects["debugCube"_h]->UpdateInstanceBuffer(i);
@@ -188,6 +194,7 @@ void D3D12App::Init()
     mPasses["debugPass"]->RegisterRenderObject(mResourceGroup.mObjects["debugLine"_h].get());
     mPasses["debugPass"]->RegisterRenderObject(mResourceGroup.mObjects["debugCube"_h].get());
     mPasses["debugPass"]->RegisterRenderObject(mResourceGroup.mObjects["gizmoArrowAABB"_h].get());
+    mPasses["debugPass"]->RegisterRenderObject(mResourceGroup.mObjects["d20AABBInst"_h].get());
 
     //mPassGraph.AddPass(mPasses["mainPass"]);          // This would enable forward rendering with no lighting
     mPassGraph.AddPass(mPasses["deferredPass"]);        // These enable deferred rendering with lighting
@@ -283,6 +290,7 @@ void D3D12App::CreateGeometry()
     mResourceGroup.mGeometry["box"_h] = Mesh::LoadMeshFromObj("../../../Resources/Models/box.obj");
     mResourceGroup.mGeometry["d20"_h] = Mesh::LoadMeshFromObj("../../../Resources/Models/D20.obj");
     mResourceGroup.mCollisionGeometry["d20"_h] = Physics::CollisionMesh::LoadMeshFromObj("../../../Resources/Models/D20.obj");
+    mResourceGroup.mGeometry["d20AABB"_h] = Mesh::CreateFromAABB(mResourceGroup.mCollisionGeometry["d20"_h]->GetAABB());
 
     mResourceGroup.mGeometry["gizmoArrow"_h] = Mesh::LoadMeshFromObj("../../../Resources/Models/YArrow.obj");
     mResourceGroup.mCollisionGeometry["gizmoArrow"_h] = Physics::CollisionMesh::LoadMeshFromObj("../../../Resources/Models/YArrow.obj");
@@ -441,13 +449,6 @@ void D3D12App::Update()
     ImGui::Text(cameraPosStr.c_str());
     ImGui::Text("Camera Forward:");
     ImGui::Text(cameraFwdStr.c_str());
-    ImGui::Text("Ray intersects triangle?");
-    ImGui::Text(std::to_string(mRayIntersectsTriangle).c_str());
-    if (mRayIntersectsTriangle)
-    {
-        ImGui::Text("Hit position:");
-        ImGui::Text(D3dUtils::VectorToString(mHitPos).c_str());
-    }
     ImGui::End();
 
     mInputState.PollKeyboard();
@@ -638,10 +639,37 @@ void D3D12App::Update()
                 if ((currentColor.x != normalColor.x) ||
                     (currentColor.y != normalColor.y) ||
                     (currentColor.z != normalColor.z) ||
-                    (currentColor.z != normalColor.z))
+                    (currentColor.w != normalColor.w))
                 {
                     rebuild |= true;
                     mResourceGroup.mObjects["gizmoArrowAABB"_h]->mInstanceValues[i].instanceColor = normalColor;
+                }
+            }
+        }
+        for (UINT i = 0; i < mResourceGroup.mObjects["d20Inst"_h]->mInstanceCount; ++i)
+        {
+            DirectX::XMFLOAT4X4 transform = mResourceGroup.mObjects["d20Inst"_h]->mInstanceValues[i].instanceTransform;
+            float tMin = FLT_MIN;
+            Physics::Rectangle aabb = mResourceGroup.mCollisionGeometry["d20"_h]->GetAABB();
+
+            bool hit = Physics::DoesRayIntersectAABBXYZ(cameraPosx, rayDir, aabb, transform, tMin, nullptr);
+            rebuild |= hit;
+
+            if (hit)
+            {
+                mResourceGroup.mObjects["d20AABBInst"_h]->mInstanceValues[i].instanceColor = DirectX::XMFLOAT4(1, 148.f / 255.f, 27.f / 255.f, 1);
+            }
+            else
+            {
+                DirectX::XMFLOAT4 currentColor = mResourceGroup.mObjects["d20AABBInst"_h]->mInstanceValues[i].instanceColor;
+                DirectX::XMFLOAT4 normalColor = DirectX::XMFLOAT4(0, 0, 0, 0);
+                if ((currentColor.x != normalColor.x) ||
+                    (currentColor.y != normalColor.y) ||
+                    (currentColor.z != normalColor.z) ||
+                    (currentColor.w != normalColor.w))
+                {
+                    rebuild |= true;
+                    mResourceGroup.mObjects["d20AABBInst"_h]->mInstanceValues[i].instanceColor = normalColor;
                 }
             }
         }
@@ -651,6 +679,7 @@ void D3D12App::Update()
             for (int i = 0; i < 3; ++i)
             {
                 mResourceGroup.mObjects["gizmoArrowAABB"_h]->UpdateInstanceBuffer(i);
+                mResourceGroup.mObjects["d20AABBInst"_h]->UpdateInstanceBuffer(i);
             }
         }
 

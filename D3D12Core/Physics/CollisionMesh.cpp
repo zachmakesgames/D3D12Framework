@@ -139,11 +139,11 @@ namespace Physics
 
 		UINT idx = 0;
 
-		float xMin = FLT_MIN;
+		float xMin = FLT_MAX;
 		float xMax = -FLT_MAX;
-		float yMin = FLT_MIN;
+		float yMin = FLT_MAX;
 		float yMax = -FLT_MAX;
-		float zMin = FLT_MIN;
+		float zMin = FLT_MAX;
 		float zMax = -FLT_MAX;
 
 
@@ -156,35 +156,16 @@ namespace Physics
 			for (int i = 0; i < 3; ++i)
 			{
 				DirectX::XMFLOAT3 vert = v[i];
-				// Compute min/max for x
-				if (vert.x < xMin)
-				{
-					xMin = vert.x;
-				}
-				if (vert.x > xMax)
-				{
-					xMax = vert.x;
-				}
 
-				// Compute min/max for y
-				if (vert.y < yMin)
-				{
-					yMin = vert.y;
-				}
-				if (vert.y > yMax)
-				{
-					yMax = vert.y;
-				}
+				// Compute min/max for each component
+				xMin = fmin(xMin, vert.x);
+				xMax = fmax(xMax, vert.x);
 
-				// Compute min/max for z
-				if (vert.z < zMin)
-				{
-					zMin = vert.z;
-				}
-				if (vert.z > zMax)
-				{
-					zMax = vert.z;
-				}
+				yMin = fmin(yMin, vert.y);
+				yMax = fmax(yMax, vert.y);
+
+				zMin = fmin(zMin, vert.z);
+				zMax = fmax(zMax, vert.z);
 			}
 
 
@@ -218,11 +199,11 @@ namespace Physics
 			returnMesh->mTriangles = new Triangle[triCount];
 			returnMesh->mTriangleCount = triCount;
 
-			float xMin = FLT_MIN;
+			float xMin = FLT_MAX;
 			float xMax = -FLT_MAX;
-			float yMin = FLT_MIN;
+			float yMin = FLT_MAX;
 			float yMax = -FLT_MAX;
-			float zMin = FLT_MIN;
+			float zMin = FLT_MAX;
 			float zMax = -FLT_MAX;
 
 			int idx = 0;
@@ -233,35 +214,16 @@ namespace Physics
 				for (int i = 0; i < 3; ++i)
 				{
 					DirectX::XMFLOAT3 vert = v[i];
-					// Compute min/max for x
-					if (vert.x < xMin)
-					{
-						xMin = vert.x;
-					}
-					if (vert.x > xMax)
-					{
-						xMax = vert.x;
-					}
 
-					// Compute min/max for y
-					if (vert.y < yMin)
-					{
-						yMin = vert.y;
-					}
-					if (vert.y > yMax)
-					{
-						yMax = vert.y;
-					}
+					// Compute min/max for each component
+					xMin = fmin(xMin, vert.x);
+					xMax = fmax(xMax, vert.x);
 
-					// Compute min/max for z
-					if (vert.z < zMin)
-					{
-						zMin = vert.z;
-					}
-					if (vert.z > zMax)
-					{
-						zMax = vert.z;
-					}
+					yMin = fmin(yMin, vert.y);
+					yMax = fmax(yMax, vert.y);
+
+					zMin = fmin(zMin, vert.z);
+					zMax = fmax(zMax, vert.z);
 				}
 
 				returnMesh->mTriangles[i] = Triangle(v[0], v[1], v[2]);
