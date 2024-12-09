@@ -3,6 +3,7 @@
 #include "Dx12Device.h"
 #include "Vertex.h"
 #include "Buffer.h"
+#include "../Physics/PhysicsPrimitives.h"
 
 class __declspec(dllexport) Mesh
 {
@@ -12,6 +13,7 @@ public:
 
 	static std::unique_ptr<Mesh> LoadMeshFromObj(std::string file_name);
 	static std::unique_ptr<Mesh> CreateMesh(Vertex* vertexData, UINT vertexCount);
+	static std::unique_ptr<Mesh> CreateFromAABB(Physics::Rectangle aABB);
 	
 	void UpdateBuffer();
 	~Mesh();

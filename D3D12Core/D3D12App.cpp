@@ -39,6 +39,8 @@ void D3D12App::Init()
     RenderObjectInit gizmoInit{ "gizmoArrow"_h, "TestPattern"_h, true, 3 };
     RenderObjectInit debugLineInit{ "debugLine"_h, "TestPattern"_h, true, 1 };
     RenderObjectInit debugCubeInit{ "debugCube"_h, "TestPattern"_h, true, 2 };
+
+    RenderObjectInit gizmoAABBInit{ "gizmoArrowAABB"_h , "TestPattern"_h, true, 3 };
     
     mResourceGroup.mObjects["box"_h] = std::make_unique<RenderObject>(boxInit);
     mResourceGroup.mObjects["box2"_h] = std::make_unique<RenderObject>(d20Init);
@@ -46,6 +48,7 @@ void D3D12App::Init()
     mResourceGroup.mObjects["gizmo"_h] = std::make_unique<RenderObject>(gizmoInit);
     mResourceGroup.mObjects["debugLine"_h] = std::make_unique<RenderObject>(debugLineInit);
     mResourceGroup.mObjects["debugCube"_h] = std::make_unique<RenderObject>(debugCubeInit);
+    mResourceGroup.mObjects["gizmoArrowAABB"_h] = std::make_unique<RenderObject>(gizmoAABBInit);
 
     // Instanced rendering example with new support for instances built into 
     // RenderObject
@@ -122,6 +125,14 @@ void D3D12App::Init()
     mResourceGroup.mObjects["gizmo"_h]->mInstanceValues[2].instanceTransform = xAxisRotation;
     mResourceGroup.mObjects["gizmo"_h]->mInstanceValues[2].instanceColor = DirectX::XMFLOAT4(0, 0, 1, 1);
 
+    mResourceGroup.mObjects["gizmoArrowAABB"_h]->mInstanceValues[0].instanceTransform = zAxisRotation;
+    mResourceGroup.mObjects["gizmoArrowAABB"_h]->mInstanceValues[0].instanceColor = DirectX::XMFLOAT4(1, 0, 0, 1);
+    mResourceGroup.mObjects["gizmoArrowAABB"_h]->mInstanceValues[1].instanceTransform = identity4x4;
+    mResourceGroup.mObjects["gizmoArrowAABB"_h]->mInstanceValues[1].instanceColor = DirectX::XMFLOAT4(0, 1, 0, 1);
+    mResourceGroup.mObjects["gizmoArrowAABB"_h]->mInstanceValues[2].instanceTransform = xAxisRotation;
+    mResourceGroup.mObjects["gizmoArrowAABB"_h]->mInstanceValues[2].instanceColor = DirectX::XMFLOAT4(0, 0, 1, 1);
+
+
     mResourceGroup.mObjects["debugLine"_h]->mInstanceValues[0].instanceTransform = identity4x4;
     mResourceGroup.mObjects["debugLine"_h]->mInstanceValues[0].instanceColor = DirectX::XMFLOAT4(1, 1, 1, 1);
 
@@ -138,6 +149,7 @@ void D3D12App::Init()
         mResourceGroup.mObjects["gizmo"_h]->UpdateInstanceBuffer(i);
         mResourceGroup.mObjects["debugLine"_h]->UpdateInstanceBuffer(i);
         mResourceGroup.mObjects["debugCube"_h]->UpdateInstanceBuffer(i);
+        mResourceGroup.mObjects["gizmoArrowAABB"_h]->UpdateInstanceBuffer(i);
     }
 
     
@@ -175,6 +187,7 @@ void D3D12App::Init()
     mPasses["unlitPass"]->RegisterRenderObject(mResourceGroup.mObjects["gizmo"_h].get());
     mPasses["debugPass"]->RegisterRenderObject(mResourceGroup.mObjects["debugLine"_h].get());
     mPasses["debugPass"]->RegisterRenderObject(mResourceGroup.mObjects["debugCube"_h].get());
+    mPasses["debugPass"]->RegisterRenderObject(mResourceGroup.mObjects["gizmoArrowAABB"_h].get());
 
     //mPassGraph.AddPass(mPasses["mainPass"]);          // This would enable forward rendering with no lighting
     mPassGraph.AddPass(mPasses["deferredPass"]);        // These enable deferred rendering with lighting
@@ -272,6 +285,8 @@ void D3D12App::CreateGeometry()
     mResourceGroup.mCollisionGeometry["d20"_h] = Physics::CollisionMesh::LoadMeshFromObj("../../../Resources/Models/D20.obj");
 
     mResourceGroup.mGeometry["gizmoArrow"_h] = Mesh::LoadMeshFromObj("../../../Resources/Models/YArrow.obj");
+    mResourceGroup.mCollisionGeometry["gizmoArrow"_h] = Physics::CollisionMesh::LoadMeshFromObj("../../../Resources/Models/YArrow.obj");
+    mResourceGroup.mGeometry["gizmoArrowAABB"_h] = Mesh::CreateFromAABB(mResourceGroup.mCollisionGeometry["gizmoArrow"_h]->GetAABB());
 
     mResourceGroup.mGeometry["triangle"_h] = Mesh::CreateMesh(sFullScreenTriangle, 3);
     mResourceGroup.mGeometry["debugLine"_h] = Mesh::CreateMesh(sLine, 2);

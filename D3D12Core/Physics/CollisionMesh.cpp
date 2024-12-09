@@ -14,7 +14,6 @@ namespace Physics
 	{
 		std::unique_ptr<CollisionMesh> returnMesh = std::make_unique<CollisionMesh>();
 		std::ifstream file;
-		//this->modelName = objFileName;
 		file.open(file_name, std::fstream::in);
 		if (!file) {
 			OutputDebugStringA("ERROR: Tried to load a mesh from file, but file was not found!");
@@ -28,7 +27,6 @@ namespace Physics
 		file.clear();
 		file.seekg(0);
 
-		// 4 billion verts is probably fine lol
 		UINT vertCount = 0;
 		UINT normCount = 0;
 		UINT texCount = 0;
@@ -38,9 +36,7 @@ namespace Physics
 
 
 
-		//Initialize the arrays
-
-
+		//Initialize the array
 		DirectX::XMFLOAT3* verts = new DirectX::XMFLOAT3[lines];
 
 		int **tris = new int*[lines];
@@ -134,13 +130,6 @@ namespace Physics
 			}
 		}
 
-		int flop = 0;
-
-
-		//fprintf(stderr, "Triangle counts in mesh %s: %i\n",this->modelName.c_str(),  triCount);
-		//int dataLen = triCount * 3 + triCount * 3 + triCount *2;
-		//int dataLen = triCount * 8 * 3;
-
 
 		// Three vertices per triangle
 		UINT dataLen = triCount * 3;
@@ -149,19 +138,59 @@ namespace Physics
 
 
 		UINT idx = 0;
-		//GLfloat* data = new GLfloat[dataLen];
-		//this->data = new vertex[dataLen];
+
+		float xMin = FLT_MIN;
+		float xMax = -FLT_MAX;
+		float yMin = FLT_MIN;
+		float yMax = -FLT_MAX;
+		float zMin = FLT_MIN;
+		float zMax = -FLT_MAX;
 
 
 		for (UINT i = 0; i < triCount; ++i) {
 			int* tri = tris[i];
-			//glm::ivec3* tri = tris[i];
 
-			int v1 = tri[0];
-			int v2 = tri[1];
-			int v3 = tri[2];
+			DirectX::XMFLOAT3 v[3] = { verts[tri[0] - 1], verts[tri[1] - 1], verts[tri[2] - 1] };
 
-			returnMesh->mTriangles[i] = Triangle(verts[v1 - 1], verts[v2 - 1], verts[v3 - 1]);
+			// Compute an AABB while we're at it
+			for (int i = 0; i < 3; ++i)
+			{
+				DirectX::XMFLOAT3 vert = v[i];
+				// Compute min/max for x
+				if (vert.x < xMin)
+				{
+					xMin = vert.x;
+				}
+				if (vert.x > xMax)
+				{
+					xMax = vert.x;
+				}
+
+				// Compute min/max for y
+				if (vert.y < yMin)
+				{
+					yMin = vert.y;
+				}
+				if (vert.y > yMax)
+				{
+					yMax = vert.y;
+				}
+
+				// Compute min/max for z
+				if (vert.z < zMin)
+				{
+					zMin = vert.z;
+				}
+				if (vert.z > zMax)
+				{
+					zMax = vert.z;
+				}
+			}
+
+
+			returnMesh->mTriangles[i] = Triangle(v[0], v[1], v[2]);
+			returnMesh->mAABB.mMin = DirectX::XMFLOAT3(xMin, yMin, zMin);
+			returnMesh->mAABB.mMax = DirectX::XMFLOAT3(xMax, yMax, zMax);
 		}
 
 		delete[] verts;
@@ -175,24 +204,70 @@ namespace Physics
 	std::unique_ptr<CollisionMesh> CollisionMesh::CreateMesh(Vertex* vertexData, UINT vertexCount)
 	{
 		std::unique_ptr<CollisionMesh> returnMesh = std::make_unique<CollisionMesh>();
-		int dataLen = (sizeof(vertexData) / sizeof(Vertex));
 
-		if (dataLen % 3 != 0)
+		// If vertex count not divisible by 3 then the mesh is not a triangulated mesh and
+		// we wont be able to easily create the colision mesh, so just return a null pointer
+		if (vertexCount % 3 != 0)
 		{
 			return nullptr;
 		}
 		else
 		{
-			int triCount = dataLen / 3;
+			int triCount = vertexCount / 3;
 
 			returnMesh->mTriangles = new Triangle[triCount];
 			returnMesh->mTriangleCount = triCount;
 
+			float xMin = FLT_MIN;
+			float xMax = -FLT_MAX;
+			float yMin = FLT_MIN;
+			float yMax = -FLT_MAX;
+			float zMin = FLT_MIN;
+			float zMax = -FLT_MAX;
+
 			int idx = 0;
 			for (int i = 0; i < triCount; ++i)
 			{
-				returnMesh->mTriangles[i] = Triangle(vertexData[idx++].position, vertexData[idx++].position, vertexData[idx++].position);
+				DirectX::XMFLOAT3 v[3] = { vertexData[idx++].position, vertexData[idx++].position, vertexData[idx++].position };
+				// Compute an AABB while we're at it
+				for (int i = 0; i < 3; ++i)
+				{
+					DirectX::XMFLOAT3 vert = v[i];
+					// Compute min/max for x
+					if (vert.x < xMin)
+					{
+						xMin = vert.x;
+					}
+					if (vert.x > xMax)
+					{
+						xMax = vert.x;
+					}
+
+					// Compute min/max for y
+					if (vert.y < yMin)
+					{
+						yMin = vert.y;
+					}
+					if (vert.y > yMax)
+					{
+						yMax = vert.y;
+					}
+
+					// Compute min/max for z
+					if (vert.z < zMin)
+					{
+						zMin = vert.z;
+					}
+					if (vert.z > zMax)
+					{
+						zMax = vert.z;
+					}
+				}
+
+				returnMesh->mTriangles[i] = Triangle(v[0], v[1], v[2]);
 			}
+			returnMesh->mAABB.mMin = DirectX::XMFLOAT3(xMin, yMin, zMin);
+			returnMesh->mAABB.mMax = DirectX::XMFLOAT3(xMax, yMax, zMax);
 		}
 
 		return std::move(returnMesh);
@@ -203,7 +278,7 @@ namespace Physics
 	{
 		bool doesHit = false;
 
-		for (int i = 0; i < mTriangleCount; ++i)
+		for (UINT i = 0; i < mTriangleCount; ++i)
 		{
 			// TODO: accumulate hit points instead of just outputting the last one
 			doesHit |= mTriangles[i].DoesRayIntersect(rayOrigin, rayDirection, transform, outHitPoint);
@@ -216,7 +291,7 @@ namespace Physics
 	{
 		bool doesHit = false;
 
-		for (int i = 0; i < mTriangleCount; ++i)
+		for (UINT i = 0; i < mTriangleCount; ++i)
 		{
 			// TODO: accumulate hit points instead of just outputting the last one
 			doesHit |= mTriangles[i].DoesLineSegmentIntersect(point1, point2, transform, outHitPoint);
