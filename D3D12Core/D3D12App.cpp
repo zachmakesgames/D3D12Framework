@@ -612,12 +612,52 @@ void D3D12App::Update()
         DirectX::XMVECTOR cameraPosV = DirectX::XMLoadFloat3(&cameraPosx);
         DirectX::XMVECTOR mousePosV = DirectX::XMLoadFloat3(&mousePosx);
 
-        DirectX::XMVECTOR rayDir = DirectX::XMVectorSubtract(mousePosV, cameraPosV);
+        DirectX::XMVECTOR rayDirV = DirectX::XMVectorSubtract(mousePosV, cameraPosV);
+        DirectX::XMFLOAT3 rayDir;
+        DirectX::XMStoreFloat3(&rayDir, rayDirV);
+
+
+        bool rebuild = false;
+        for (UINT i = 0; i < mResourceGroup.mObjects["gizmo"_h]->mInstanceCount; ++i)
+        {
+            DirectX::XMFLOAT4X4 gizmoTransform = mResourceGroup.mObjects["gizmo"_h]->mInstanceValues[i].instanceTransform;
+            float tMin = FLT_MIN;
+            Physics::Rectangle aabb = mResourceGroup.mCollisionGeometry["gizmoArrow"_h]->GetAABB();
+            bool hit = Physics::DoesRayIntersectAABBXYZ(cameraPosx, rayDir, aabb, gizmoTransform, tMin, nullptr);
+            rebuild |= hit;
+
+            if (hit)
+            {
+                mResourceGroup.mObjects["gizmoArrowAABB"_h]->mInstanceValues[i].instanceColor = DirectX::XMFLOAT4(1, 148.f / 255.f, 27.f / 255.f, 1);
+            }
+            else
+            {
+                DirectX::XMFLOAT4 currentColor = mResourceGroup.mObjects["gizmoArrowAABB"_h]->mInstanceValues[i].instanceColor;
+                DirectX::XMFLOAT4 normalColor = mResourceGroup.mObjects["gizmo"_h]->mInstanceValues[i].instanceColor;
+
+                if ((currentColor.x != normalColor.x) ||
+                    (currentColor.y != normalColor.y) ||
+                    (currentColor.z != normalColor.z) ||
+                    (currentColor.z != normalColor.z))
+                {
+                    rebuild |= true;
+                    mResourceGroup.mObjects["gizmoArrowAABB"_h]->mInstanceValues[i].instanceColor = normalColor;
+                }
+            }
+        }
+
+        if (rebuild)
+        {
+            for (int i = 0; i < 3; ++i)
+            {
+                mResourceGroup.mObjects["gizmoArrowAABB"_h]->UpdateInstanceBuffer(i);
+            }
+        }
 
 
         // Ray intersection test against the spinning d20 object
         DirectX::XMMATRIX d20Transform = DirectX::XMLoadFloat4x4(&mResourceGroup.mObjects["box2"_h]->mConstants.worldTransform);
-        mRayIntersectsTriangle = mResourceGroup.mCollisionGeometry["d20"_h]->DoesRayIntersect(cameraPosV, rayDir, d20Transform, &mHitPos);
+        mRayIntersectsTriangle = mResourceGroup.mCollisionGeometry["d20"_h]->DoesRayIntersect(cameraPosV, rayDirV, d20Transform, &mHitPos);
     }
 
 
