@@ -66,6 +66,13 @@ std::unique_ptr<Mesh> Mesh::LoadMeshFromObj(std::string file_name)
 			tex[texCount].y = t;
 			++texCount;
 		}
+		if (line[0] == 'l')
+		{
+			int v1, v2;
+			v1 = v2 = 0;
+			sscanf_s(line.c_str(), "l %i %i", &v1, &v2);
+
+		}
 		if (line[0] == 'f') {
 			int vertsPerFace = 0;
 			for (int i = 0; i < strlen(line.c_str()); ++i) {
@@ -224,6 +231,258 @@ std::unique_ptr<Mesh> Mesh::LoadMeshFromObj(std::string file_name)
 
 
 	returnMesh->mVertexCount = triCount * 3;
+
+	file.close();
+
+	returnMesh->mVertexBuffer = Dx12Device::CreateBuffer(returnMesh->mVertexData, sizeof(Vertex) * returnMesh->mVertexCount);
+
+	returnMesh->mVertexBufferView = {};
+	returnMesh->mVertexBufferView.BufferLocation = returnMesh->mVertexBuffer->mResource->GetGPUVirtualAddress();
+	returnMesh->mVertexBufferView.SizeInBytes = returnMesh->mVertexCount * sizeof(Vertex);
+	returnMesh->mVertexBufferView.StrideInBytes = sizeof(Vertex);
+
+	return std::move(returnMesh);
+}
+
+std::unique_ptr<Mesh> Mesh::LoadMeshFromObj2(std::string file_name)
+{
+	std::unique_ptr<Mesh> returnMesh = std::make_unique<Mesh>();
+	std::ifstream file;
+	file.open(file_name, std::fstream::in);
+	if (!file) {
+		OutputDebugStringA("ERROR: Tried to load a mesh from file, but file was not found!");
+		return std::move(returnMesh);
+	}
+
+	UINT vertIndexCount = 0;
+	UINT normIndexCount = 0;
+	UINT texIndexCount = 0;
+	UINT lines = 0;
+	UINT objCount = 0;
+
+	UINT vertCount = 0;
+	std::string line = "";
+
+	while (std::getline(file, line)) {
+		++lines;
+		if (line[0] == 'o')
+		{
+			++objCount;
+		}
+		if (line[0] == 'v')
+		{
+			if (line[1] == ' ')
+			{
+				++vertIndexCount;
+			}
+			if (line[1] == 'n')
+			{
+				++normIndexCount;
+			}
+			if (line[1] == 't')
+			{
+				++texIndexCount;
+			}
+		}
+
+		if (line[0] == 'l')
+		{
+			vertCount += 2;
+		}
+
+		if (line[0] == 'f')
+		{
+			int vertsPerFace = 0;
+			for (int i = 0; i < strlen(line.c_str()); ++i) {
+				if (line[i] == '/') {
+					++vertsPerFace;
+				}
+			}
+			vertsPerFace /= 2;
+
+			if (vertsPerFace == 3)
+			{
+				vertCount += vertsPerFace;
+			}
+			if (vertsPerFace == 4)
+			{
+				// We need to split quads up into triangles
+				// one quad (4 verts) becomes 2 tris (6 verts)
+				vertCount += 6;
+			}
+
+			vertCount += vertsPerFace;
+		}
+	}
+	file.clear();
+	file.seekg(0);
+
+
+	//Initialize the arrays
+	DirectX::XMFLOAT3* vertIndices = new DirectX::XMFLOAT3[vertIndexCount];
+	DirectX::XMFLOAT3* normIndices = new DirectX::XMFLOAT3[normIndexCount];
+	DirectX::XMFLOAT2* texIndices = new DirectX::XMFLOAT2[texIndexCount];
+
+	returnMesh->mVertexData = new Vertex[vertCount];
+	memset(returnMesh->mVertexData, 0x00, sizeof(Vertex) * vertCount);
+
+	UINT vertIndIdx = 0;
+	UINT normIndIdx = 0;
+	UINT texIndIdx = 0;
+
+	UINT vertIdx = 0;
+	//end init of arrays
+	while (std::getline(file, line)) {
+		if ((line[0] == 'v' || line[0] == 'V') && line[1] == ' ') {
+			float x, y, z;
+			sscanf_s(line.c_str(), "v %f %f %f\n", &x, &y, &z);
+			vertIndices[vertIndIdx].x = x;
+			vertIndices[vertIndIdx].y = y;
+			vertIndices[vertIndIdx].z = z;
+			++vertIndIdx;
+		}
+		if (line[0] == 'v' && line[1] == 'n') {
+			float xn, yn, zn;
+			sscanf_s(line.c_str(), "vn %f %f %f\n", &xn, &yn, &zn);
+			normIndices[normIndIdx].x = xn;
+			normIndices[normIndIdx].y = yn;
+			normIndices[normIndIdx].z = zn;
+			++normIndIdx;
+		}
+		if (line[0] == 'v' && line[1] == 't') {
+			float s, t;
+			sscanf_s(line.c_str(), "vt %f %f\n", &s, &t);
+			texIndices[texIndIdx].x = s;	// Need to use X and Y here because XMFLOAT2 doesnt alias its members like GLM
+			texIndices[texIndIdx].y = t;
+			++texIndIdx;
+		}
+		if (line[0] == 'l')
+		{
+			int v1, v2;
+			v1 = v2 = 0;
+			sscanf_s(line.c_str(), "l %i %i", &v1, &v2);
+
+			Vertex vert1;
+			vert1.position = DirectX::XMFLOAT3(vertIndices[v1 - 1]);
+			vert1.normal = DirectX::XMFLOAT3(0, 0, 0);
+			vert1.texCoord = DirectX::XMFLOAT2(0, 0);
+
+			Vertex vert2;
+			vert2.position = DirectX::XMFLOAT3(vertIndices[v2 - 1]);
+			vert2.normal = DirectX::XMFLOAT3(0, 0, 0);
+			vert2.texCoord = DirectX::XMFLOAT2(0, 0);
+
+			returnMesh->mVertexData[vertIdx++] = vert1;
+			returnMesh->mVertexData[vertIdx++] = vert2;
+
+
+
+		}
+		if (line[0] == 'f') {
+
+			int v1, v2, v3, v4;
+			int t1, t2, t3, t4;
+			int n1, n2, n3, n4;
+			v1 = 0;
+			v2 = 0;
+			v3 = 0;
+			v4 = 0;
+			t1 = 0;
+			t2 = 0;
+			t3 = 0;
+			t4 = 0;
+			n1 = 0;
+			n2 = 0;
+			n3 = 0;
+			n4 = 0;
+
+			int vertsPerFace = 0;
+			for (int i = 0; i < strlen(line.c_str()); ++i) {
+				if (line[i] == '/') {
+					++vertsPerFace;
+				}
+			}
+			vertsPerFace /= 2;
+
+			if (vertsPerFace == 3) {
+				//fix for no texture coords
+				std::size_t pos = line.find("//");
+				while (pos != std::string::npos) {
+					line.insert(pos + 1, "0");
+					pos = line.find("//");
+				}
+				//load in the triangle
+				sscanf_s(line.c_str(), "f %i/%i/%i %i/%i/%i %i/%i/%i", &v1, &t1, &n1, &v2, &t2, &n2, &v3, &t3, &n3);
+
+				Vertex vert1;
+				vert1.position = DirectX::XMFLOAT3(vertIndices[v1 - 1]);
+				vert1.normal = DirectX::XMFLOAT3(normIndices[n1 - 1]);
+				vert1.texCoord = DirectX::XMFLOAT2(texIndices[t1 - 1]);
+
+				Vertex vert2;
+				vert2.position = DirectX::XMFLOAT3(vertIndices[v2 - 1]);
+				vert2.normal = DirectX::XMFLOAT3(normIndices[n2 - 1]);
+				vert2.texCoord = DirectX::XMFLOAT2(texIndices[t2 - 1]);
+
+				Vertex vert3;
+				vert3.position = DirectX::XMFLOAT3(vertIndices[v3 - 1]);
+				vert3.normal = DirectX::XMFLOAT3(normIndices[n3 - 1]);
+				vert3.texCoord = DirectX::XMFLOAT2(texIndices[t3 - 1]);
+				
+				returnMesh->mVertexData[vertIdx++] = vert1;
+				returnMesh->mVertexData[vertIdx++] = vert2;
+				returnMesh->mVertexData[vertIdx++] = vert3;
+			}
+			if (vertsPerFace == 4) {
+				//fix for no texture coords
+				std::size_t pos = line.find("//");
+				while (pos != std::string::npos) {
+					line.insert(pos + 1, "0");
+					pos = line.find("//");
+				}
+				//load in the quad and triangulate
+				sscanf_s(line.c_str(), "f %i/%i/%i %i/%i/%i %i/%i/%i %i/%i/%i", &v1, &t1, &n1, &v2, &t2, &n2, &v3, &t3, &n3, &v4, &t4, &n4);
+
+				Vertex vert1;
+				vert1.position = DirectX::XMFLOAT3(vertIndices[v1 - 1]);
+				vert1.normal = DirectX::XMFLOAT3(normIndices[n1 - 1]);
+				vert1.texCoord = DirectX::XMFLOAT2(texIndices[t1 - 1]);
+
+				Vertex vert2;
+				vert2.position = DirectX::XMFLOAT3(vertIndices[v2 - 1]);
+				vert2.normal = DirectX::XMFLOAT3(normIndices[n2 - 1]);
+				vert2.texCoord = DirectX::XMFLOAT2(texIndices[t2 - 1]);
+
+				Vertex vert3;
+				vert3.position = DirectX::XMFLOAT3(vertIndices[v3 - 1]);
+				vert3.normal = DirectX::XMFLOAT3(normIndices[n3 - 1]);
+				vert3.texCoord = DirectX::XMFLOAT2(texIndices[t3 - 1]);
+				
+				Vertex vert4;
+				vert4.position = DirectX::XMFLOAT3(vertIndices[v4 - 1]);
+				vert4.normal = DirectX::XMFLOAT3(normIndices[n4 - 1]);
+				vert4.texCoord = DirectX::XMFLOAT2(texIndices[t4 - 1]);
+
+				// First triangle in the quad
+				returnMesh->mVertexData[vertIdx++] = vert1;
+				returnMesh->mVertexData[vertIdx++] = vert2;
+				returnMesh->mVertexData[vertIdx++] = vert3;
+
+				// Second triangle in the quad
+				returnMesh->mVertexData[vertIdx++] = vert3;
+				returnMesh->mVertexData[vertIdx++] = vert4;
+				returnMesh->mVertexData[vertIdx++] = vert1;
+			}
+		}
+	}
+
+	returnMesh->mDataLen = vertCount;
+
+	delete[] vertIndices;
+	delete[] normIndices;
+	delete[] texIndices;
+
+	returnMesh->mVertexCount = vertCount;
 
 	file.close();
 

@@ -112,6 +112,12 @@
     <ClInclude Include="Physics\PhysicsSphere.h">
       <Filter>Physics</Filter>
     </ClInclude>
+    <ClInclude Include="Physics\OctTree.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Physics\SpatialBucket.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Renderer\Buffer.cpp">
@@ -172,6 +178,9 @@
       <Filter>Physics</Filter>
     </ClCompile>
     <ClCompile Include="Physics\PhysicsSphere.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Physics\OctTree.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
   </ItemGroup>

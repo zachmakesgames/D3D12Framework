@@ -22,6 +22,7 @@
   <ItemGroup>
     <ClCompile Include="DebugPass.cpp" />
     <ClCompile Include="Physics\CollisionMesh.cpp" />
+    <ClCompile Include="Physics\OctTree.cpp" />
     <ClCompile Include="Physics\PhysicsAABB.cpp" />
     <ClCompile Include="Physics\PhysicsSphere.cpp" />
     <ClCompile Include="Physics\Triangle.cpp" />
@@ -44,9 +45,11 @@
     <ClInclude Include="DebugPass.h" />
     <ClInclude Include="FrameTimer.h" />
     <ClInclude Include="Physics\CollisionMesh.h" />
+    <ClInclude Include="Physics\OctTree.h" />
     <ClInclude Include="Physics\PhysicsAABB.h" />
     <ClInclude Include="Physics\PhysicsPrimitives.h" />
     <ClInclude Include="Physics\PhysicsSphere.h" />
+    <ClInclude Include="Physics\SpatialBucket.h" />
     <ClInclude Include="Physics\Triangle.h" />
     <ClInclude Include="UnlitPass.h" />
   </ItemGroup>

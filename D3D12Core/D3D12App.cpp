@@ -41,6 +41,8 @@ void D3D12App::Init()
     RenderObjectInit debugCubeInit{ "debugCube"_h, "TestPattern"_h, true, 2 };
 
     RenderObjectInit gizmoAABBInit{ "gizmoArrowAABB"_h , "TestPattern"_h, true, 3 };
+    RenderObjectInit debugSphereInit= { "debugSphere"_h, "TestPattern"_h, true, 1 };
+    
     
     mResourceGroup.mObjects["box"_h] = std::make_unique<RenderObject>(boxInit);
     mResourceGroup.mObjects["box2"_h] = std::make_unique<RenderObject>(d20Init);
@@ -49,6 +51,8 @@ void D3D12App::Init()
     mResourceGroup.mObjects["debugLine"_h] = std::make_unique<RenderObject>(debugLineInit);
     mResourceGroup.mObjects["debugCube"_h] = std::make_unique<RenderObject>(debugCubeInit);
     mResourceGroup.mObjects["gizmoArrowAABB"_h] = std::make_unique<RenderObject>(gizmoAABBInit);
+
+    mResourceGroup.mObjects["debugSphere"_h] = std::make_unique<RenderObject>(debugSphereInit);
 
     // Instanced rendering example with new support for instances built into 
     // RenderObject
@@ -146,6 +150,9 @@ void D3D12App::Init()
     mResourceGroup.mObjects["debugCube"_h]->mInstanceValues[1].instanceTransform = scale4x4;
     mResourceGroup.mObjects["debugCube"_h]->mInstanceValues[1].instanceColor = DirectX::XMFLOAT4(0, 1.f, 0.f, 1);
 
+    mResourceGroup.mObjects["debugSphere"_h]->mInstanceValues[0].instanceTransform = identity4x4;
+    mResourceGroup.mObjects["debugSphere"_h]->mInstanceValues[0].instanceColor = DirectX::XMFLOAT4(1, 148.f / 255.f, 27.f / 255.f, 1);
+
 
 
     for (int i = 0; i < Dx12Device::GetSwapchainBufferCount(); ++i)
@@ -156,6 +163,7 @@ void D3D12App::Init()
         mResourceGroup.mObjects["debugLine"_h]->UpdateInstanceBuffer(i);
         mResourceGroup.mObjects["debugCube"_h]->UpdateInstanceBuffer(i);
         mResourceGroup.mObjects["gizmoArrowAABB"_h]->UpdateInstanceBuffer(i);
+        mResourceGroup.mObjects["debugSphere"_h]->UpdateInstanceBuffer(i);
     }
 
     
@@ -195,6 +203,7 @@ void D3D12App::Init()
     mPasses["debugPass"]->RegisterRenderObject(mResourceGroup.mObjects["debugCube"_h].get());
     mPasses["debugPass"]->RegisterRenderObject(mResourceGroup.mObjects["gizmoArrowAABB"_h].get());
     mPasses["debugPass"]->RegisterRenderObject(mResourceGroup.mObjects["d20AABBInst"_h].get());
+    mPasses["debugPass"]->RegisterRenderObject(mResourceGroup.mObjects["debugSphere"_h].get());
 
     //mPassGraph.AddPass(mPasses["mainPass"]);          // This would enable forward rendering with no lighting
     mPassGraph.AddPass(mPasses["deferredPass"]);        // These enable deferred rendering with lighting
@@ -287,18 +296,20 @@ void D3D12App::CreateRootSigs()
 
 void D3D12App::CreateGeometry()
 {
-    mResourceGroup.mGeometry["box"_h] = Mesh::LoadMeshFromObj("../../../Resources/Models/box.obj");
-    mResourceGroup.mGeometry["d20"_h] = Mesh::LoadMeshFromObj("../../../Resources/Models/D20.obj");
+    mResourceGroup.mGeometry["box"_h] = Mesh::LoadMeshFromObj2("../../../Resources/Models/box.obj");
+    mResourceGroup.mGeometry["d20"_h] = Mesh::LoadMeshFromObj2("../../../Resources/Models/D20.obj");
     mResourceGroup.mCollisionGeometry["d20"_h] = Physics::CollisionMesh::LoadMeshFromObj("../../../Resources/Models/D20.obj");
     mResourceGroup.mGeometry["d20AABB"_h] = Mesh::CreateFromAABB(mResourceGroup.mCollisionGeometry["d20"_h]->GetAABB());
 
-    mResourceGroup.mGeometry["gizmoArrow"_h] = Mesh::LoadMeshFromObj("../../../Resources/Models/YArrow.obj");
+    mResourceGroup.mGeometry["gizmoArrow"_h] = Mesh::LoadMeshFromObj2("../../../Resources/Models/YArrow.obj");
     mResourceGroup.mCollisionGeometry["gizmoArrow"_h] = Physics::CollisionMesh::LoadMeshFromObj("../../../Resources/Models/YArrow.obj");
     mResourceGroup.mGeometry["gizmoArrowAABB"_h] = Mesh::CreateFromAABB(mResourceGroup.mCollisionGeometry["gizmoArrow"_h]->GetAABB());
 
     mResourceGroup.mGeometry["triangle"_h] = Mesh::CreateMesh(sFullScreenTriangle, 3);
     mResourceGroup.mGeometry["debugLine"_h] = Mesh::CreateMesh(sLine, 2);
     mResourceGroup.mGeometry["debugCube"_h] = Mesh::CreateMesh(sCube, sizeof(sCube)/sizeof(Vertex));
+
+    mResourceGroup.mGeometry["debugSphere"_h] = Mesh::LoadMeshFromObj2("../../../Resources/Models/DebugSphere.obj");
 
 
 

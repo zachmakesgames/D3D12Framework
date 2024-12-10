@@ -7,7 +7,7 @@ public:
 
 	inline void Tick()
 	{
-		if (mFrameCount > 100)
+		if (mFrameCount > 10)
 		{
 			mAverageFrameTime = mFrameTimeSum / (double)mFrameCount;
 			mFrameCount = 0;
